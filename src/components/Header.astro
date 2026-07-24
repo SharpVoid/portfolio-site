@@ -1,0 +1,30 @@
+<header class="site-header">
+	<a class="site-header__home" href="/">Портфолио</a>
+
+	<nav aria-label="Основная навигация">
+		<a href="#projects">Проекты</a>
+		<a href="#contacts">Контакты</a>
+	</nav>
+</header>
+
+<style>
+	.site-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-md);
+		width: min(100% - (var(--page-padding) * 2), var(--content-width));
+		margin-inline: auto;
+		padding-block: var(--space-lg);
+		border-bottom: 1px solid var(--color-border);
+	}
+
+	.site-header__home {
+		font-weight: 600;
+	}
+
+	nav {
+		display: flex;
+		gap: var(--space-md);
+	}
+</style>

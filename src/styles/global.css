@@ -1,0 +1,52 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	background: var(--color-background);
+	color: var(--color-text);
+	font-family: var(--font-sans);
+	line-height: 1.5;
+}
+
+img {
+	display: block;
+	max-width: 100%;
+}
+
+a {
+	color: inherit;
+}
+
+a:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: 0.25rem;
+}
+
+main {
+	width: min(100% - (var(--page-padding) * 2), var(--content-width));
+	margin-inline: auto;
+	padding-block: var(--space-xl);
+}
+
+.page-intro {
+	max-width: 42rem;
+	margin-bottom: var(--space-xl);
+}
+
+.page-intro h1,
+.page-intro p {
+	margin: 0;
+}
+
+.page-intro p {
+	margin-top: var(--space-sm);
+	color: var(--color-text-muted);
+}
