@@ -1,26 +1,32 @@
----
-const currentYear = new Date().getFullYear();
----
-
-<footer id="contacts" class="site-footer">
-	<p>© {currentYear} Портфолио</p>
-	<a href="mailto:hello@example.com">hello@example.com</a>
+<footer class="site-footer page-container">
+  <p>Москва, Россия · GMT/UTC+3<span data-moscow-clock hidden> · <time></time></span></p>
 </footer>
 
-<style>
-	.site-footer {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: var(--space-sm) var(--space-md);
-		width: min(100% - (var(--page-padding) * 2), var(--content-width));
-		margin-inline: auto;
-		padding-block: var(--space-xl);
-		border-top: 1px solid var(--color-border);
-		color: var(--color-text-muted);
-	}
+<script>
+  const clock = document.querySelector<HTMLElement>('[data-moscow-clock]');
+  const time = clock?.querySelector('time');
 
-	.site-footer p {
-		margin: 0;
-	}
+  if (clock && time) {
+    const formatter = new Intl.DateTimeFormat('ru-RU', {
+      timeZone: 'Europe/Moscow',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    });
+
+    const updateTime = () => {
+      const now = new Date();
+      time.textContent = formatter.format(now);
+      time.dateTime = now.toISOString();
+      clock.hidden = false;
+    };
+
+    updateTime();
+    window.setInterval(updateTime, 60_000);
+  }
+</script>
+
+<style>
+  .site-footer { padding-block: 64px 50px; text-align: center; color: #747474; font-family: var(--font-ui); }
+  .site-footer p { margin: 0; font-size: 16px; line-height: 19px; }
 </style>

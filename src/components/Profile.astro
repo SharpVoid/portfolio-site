@@ -1,0 +1,69 @@
+---
+interface Props { resumeHref?: string; }
+const { resumeHref } = Astro.props;
+---
+<section class="profile" aria-labelledby="page-title">
+  <div class="profile__details">
+    <div class="profile__about">
+      <h1 id="page-title"><a href="/">Лисенко Михаил</a></h1>
+      <p>Product designer<br />Проектирую сложные<span class="profile__mobile-break"><br /></span><span class="profile__mobile-space"> </span>интерфейсы,<span class="profile__compact-break"><br /></span><span class="profile__compact-space"> </span>AI-продукты<span class="profile__break"><br /></span><span class="profile__space"> </span>и B2B SaaS</p>
+    </div>
+    <p class="profile__experience">3+ года опыта · Техническое образование</p>
+    <div class="profile__achievements">
+      <h2>Достижения</h2>
+      <p>Дважды победил во всеросийском<span class="profile__achievement-break"><br /></span><span class="profile__achievement-space"> </span>хакатоне «Цифровой Прорыв» сезон ИИ»</p>
+    </div>
+  </div>
+  <div id="contacts" class="profile__contacts">
+    <div class="profile__links">
+      {resumeHref ? <a href={resumeHref}>Резюме</a> : <span class="profile__resume">Резюме</span>}
+      <a href="mailto:lisenkomike.v@gmail.com">lisenkomike.v@gmail.com</a>
+      <a href="https://t.me/sharpvoid">@sharpvoid</a>
+    </div>
+    <a class="profile__contact" href="https://t.me/sharpvoid">Связаться</a>
+  </div>
+</section>
+<style>
+  .profile { position: sticky; top: 50px; align-self: start; min-width: 0; }
+  .profile p, .profile h1, .profile h2 { margin: 0; }
+  .profile__details { display: grid; gap: 32px; }
+  .profile__about { display: grid; gap: 8px; }
+  h1 { color: var(--color-accent); font-size: 24px; font-weight: 500; line-height: 31px; }
+  h1 a { text-decoration: none; }
+  .profile__details p { line-height: 21px; }
+  .profile__experience, h2 { color: var(--color-text-muted); }
+  .profile__achievements { display: grid; gap: 8px; }
+  .profile__achievements p { max-width: 690px; }
+  h2 { font-family: var(--font-ui); font-size: 16px; font-weight: 500; line-height: 19px; }
+  .profile__contacts { display: grid; gap: 28px; margin-top: 28px; scroll-margin-top: 50px; }
+  .profile__links { display: flex; flex-wrap: wrap; gap: 12px 28px; color: var(--color-accent); line-height: 20px; }
+  .profile__links a, .profile__resume { text-decoration: underline; text-underline-position: under; }
+  .profile__contact {
+    display: flex; justify-content: center; align-items: center;
+    padding: 10px 20px; border-radius: 10px; background: var(--color-button);
+    color: white; font-family: var(--font-ui); font-weight: 500;
+    line-height: 19px; text-decoration: none;
+  }
+  .profile__break, .profile__mobile-break, .profile__compact-break, .profile__achievement-break { display: none; }
+  @media (min-width: 1025px) {
+    .profile__achievement-break { display: inline; }
+    .profile__achievement-space { display: none; }
+  }
+  @media (min-width: 1025px) and (max-width: 1679px) {
+    .profile__compact-break { display: inline; }
+    .profile__compact-space { display: none; }
+  }
+  @media (min-width: 1680px) {
+    .profile__break { display: inline; }
+    .profile__space { display: none; }
+  }
+  @media (max-width: 1024px) { .profile { position: static; } }
+  @media (max-width: 600px) {
+    h1 { font-size: 28px; line-height: 36px; }
+    h2 { font-weight: 600; }
+    .profile__experience { font-weight: 500; }
+    .profile__links { display: none; }
+    .profile__break, .profile__mobile-break, .profile__achievement-break { display: inline; }
+    .profile__space, .profile__mobile-space, .profile__achievement-space { display: none; }
+  }
+</style>

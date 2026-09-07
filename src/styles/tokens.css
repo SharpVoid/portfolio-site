@@ -1,19 +1,25 @@
 :root {
-	--color-background: #ffffff;
-	--color-surface-muted: #f3f3f3;
-	--color-text: #171717;
-	--color-text-muted: #666666;
-	--color-border: #d9d9d9;
-
-	--font-sans: Arial, Helvetica, sans-serif;
-	--content-width: 72rem;
-	--page-padding: 1.25rem;
-
-	--space-xs: 0.5rem;
-	--space-sm: 0.75rem;
-	--space-md: 1rem;
-	--space-lg: 1.5rem;
-	--space-xl: 3rem;
-
-	--radius-md: 0.5rem;
+  --color-background: #ffffff;
+  --color-surface-muted: #f3f3f3;
+  --color-text: #000000;
+  --color-text-muted: #48626d;
+  --color-border: #d9d9d9;
+  --color-accent: #006dea;
+  --color-button: #009adb;
+  --font-sans: 'Onest', Arial, Helvetica, sans-serif;
+  --font-ui: 'Inter', Arial, Helvetica, sans-serif;
+  --content-width: 100rem;
+  --page-padding: clamp(30px, calc(12.5vw - 80px), 160px);
+  --cover-height: 660px;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 3rem;
+  --radius-md: 0.5rem;
 }
+@media (max-width: 1024px) { :root { --page-padding: 30px; } }
+@media (max-width: 767px) {
+  :root { --cover-height: clamp(400px, calc(46.56085vw + 302.4127px), 660px); }
+}
+@media (max-width: 600px) { :root { --page-padding: 16px; } }

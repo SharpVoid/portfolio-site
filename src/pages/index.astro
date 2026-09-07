@@ -1,32 +1,61 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
+import Profile from '../components/Profile.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import focusDesktop from '../assets/projects/focus-desktop.png';
+import focusMobile from '../assets/projects/focus-mobile.png';
+import bankDesktop from '../assets/projects/bank-desktop.png';
+import bankMobile from '../assets/projects/bank-mobile.png';
+import arenaDesktop from '../assets/projects/arena-desktop.png';
+import arenaMobile from '../assets/projects/arena-mobile.png';
+import atomDesktop from '../assets/projects/atom-desktop.png';
+import atomMobile from '../assets/projects/atom-mobile.png';
+
+// Add published URLs here when available; the existing project has no case routes.
+const projects = [
+  {
+    id: 'focusml', title: 'FocusML',
+    description: 'Веб-инструмент разметки и обучения моделей машинного зрения',
+    image: focusDesktop, mobileImage: focusMobile,
+    alt: 'Интерфейс FocusML: разметка изображения арбузов с помощью текстового запроса',
+    priority: true,
+    variants: [
+      { image: focusMobile, media: '(min-width: 601px) and (max-width: 900px)' },
+    ],
+  },
+  {
+    id: 'doverie', title: 'Банк «Доверие»',
+    description: 'Мобильное банковское приложение с внедрением социальных функций',
+    image: bankDesktop, mobileImage: bankMobile,
+    alt: 'Главный экран банка «Доверие» на телефоне: баланс, карты и история операций',
+  },
+  {
+    id: 'design-arena', title: 'Дизайн-арена',
+    description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа',
+    image: arenaDesktop, mobileImage: arenaMobile, secondary: true,
+    alt: 'Экран приложения на телефоне с кольцом дневной нормы калорий и показателями питания',
+  },
+  {
+    id: 'atomreport', title: 'АтомРепорт',
+    description: 'Веб-сервис подготовки и согласования цифровой отчётности',
+    image: atomDesktop, mobileImage: atomMobile, secondary: true,
+    alt: 'Светящиеся цифровые документы и курсор на обложке АтомРепорта',
+  },
+];
 ---
-
-<BaseLayout
-	title="Портфолио"
-	description="Работы и проекты Михаила Лисенко"
->
-	<Header />
-
-	<main>
-		<section class="page-intro" aria-labelledby="page-title">
-			<h1 id="page-title">Портфолио</h1>
-			<p>Технический каркас для будущих проектов.</p>
-		</section>
-
-		<section id="projects" aria-label="Проекты">
-			<ProjectCard
-				title="Тестовый проект"
-				description="Временная карточка для проверки структуры портфолио."
-				image=""
-				href="#projects"
-				year="2026"
-			/>
-		</section>
-	</main>
-
-	<Footer />
+<BaseLayout title="Портфолио — Лисенко Михаил" description="Работы и проекты Михаила Лисенко — Product designer">
+  <main class="portfolio page-container">
+    <Profile />
+    <section id="projects" class="projects" aria-label="Проекты">
+      {projects.map((project) => <ProjectCard {...project} />)}
+    </section>
+  </main>
+  <Footer />
 </BaseLayout>
+<style>
+  .portfolio { display: grid; grid-template-columns: 419px minmax(0, 1fr); gap: 80px; padding-top: 50px; }
+  .projects { display: grid; gap: 48px; min-width: 0; scroll-margin-top: 50px; }
+  @media (max-width: 1024px) { .portfolio { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 600px) { .portfolio { padding-top: 100px; } }
+</style>
