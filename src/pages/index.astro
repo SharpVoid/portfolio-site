@@ -22,6 +22,7 @@ const projects = [
     priority: true,
     variants: [
       { image: focusMobile, media: '(min-width: 601px) and (max-width: 900px)' },
+      { image: focusMobile, media: '(min-width: 1025px) and (max-width: 1679px)' },
     ],
   },
   {
@@ -50,12 +51,20 @@ const projects = [
     <section id="projects" class="projects" aria-label="Проекты">
       {projects.map((project) => <ProjectCard {...project} />)}
     </section>
+    <Footer />
   </main>
-  <Footer />
 </BaseLayout>
 <style>
-  .portfolio { display: grid; grid-template-columns: 419px minmax(0, 1fr); gap: 80px; padding-top: 50px; }
-  .projects { display: grid; gap: 48px; min-width: 0; scroll-margin-top: 50px; }
-  @media (max-width: 1024px) { .portfolio { grid-template-columns: minmax(0, 1fr); } }
+  .portfolio { display: grid; grid-template-columns: 419px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
+  .portfolio > :global(.profile) { grid-column: 1; grid-row: 1; }
+  @media (min-width: 1025px) and (max-height: 519px) {
+    /* Leave 30px between the scrollable profile and the viewport-pinned footer. */
+    .portfolio > :global(.profile) { max-height: calc(100dvh - 149px); overflow-y: auto; }
+  }
+  .projects { display: grid; gap: 48px; min-width: 0; scroll-margin-top: 50px; grid-column: 2; grid-row: 1; }
+  @media (max-width: 1024px) {
+    .portfolio { grid-template-columns: minmax(0, 1fr); }
+    .projects { grid-column: 1; grid-row: auto; margin-top: 80px; }
+  }
   @media (max-width: 600px) { .portfolio { padding-top: 100px; } }
 </style>

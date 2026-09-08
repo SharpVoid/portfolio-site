@@ -1,4 +1,4 @@
-<footer class="site-footer page-container">
+<footer class="site-footer">
   <p>Москва, Россия · GMT/UTC+3<span data-moscow-clock hidden> · <time></time></span></p>
 </footer>
 
@@ -27,6 +27,16 @@
 </script>
 
 <style>
-  .site-footer { padding-block: 64px 50px; text-align: center; color: #747474; font-family: var(--font-ui); }
+  .site-footer { grid-column: 1; grid-row: 1; align-self: end; text-align: center; color: #747474; font-family: var(--font-ui); }
   .site-footer p { margin: 0; font-size: 16px; line-height: 19px; }
+  @media (min-width: 1025px) {
+    .site-footer {
+      position: sticky;
+      top: calc(100dvh - 50px - 19px);
+      align-self: start;
+    }
+  }
+  @media (max-width: 1024px) {
+    .site-footer { grid-row: auto; margin-top: 64px; }
+  }
 </style>

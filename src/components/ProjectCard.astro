@@ -52,19 +52,22 @@ const Card = href ? 'a' : 'div';
   h2, p { margin: 0; font-size: 16px; line-height: 20px; }
   h2 { color: var(--color-accent); font-weight: 600; }
   a:hover h2 { text-decoration: underline; text-underline-offset: 3px; }
-  @media (min-width: 1025px) {
-    /* Figma keeps the annotation toolbar visible as the desktop column narrows. */
-    #focusml img { object-position: calc(50% + clamp(0px, calc(660px - 34.375vw), 165px)) center; }
-  }
   .project-card--secondary .project-card__link { gap: 28px; }
   .project-card--secondary .project-card__media {
-    border-radius: 15px;
     box-shadow: 217px 137px 103px rgb(179 203 234 / 1%), 122px 77px 87px rgb(179 203 234 / 5%), 54px 34px 64px rgb(179 203 234 / 9%), 14px 9px 35px rgb(179 203 234 / 10%);
+  }
+  @media (max-width: 1024px) {
+    .project-card__media { border-radius: 15px; }
+  }
+  @media (min-width: 901px) {
+    h2 { font-size: 20px; line-height: 26px; }
+    .project-card:not(.project-card--secondary) .project-card__media { height: 654px; }
+    .project-card--secondary .project-card__link { gap: 18px; }
   }
   @media (max-width: 600px) {
     h2 { font-size: 20px; line-height: 26px; }
+    p { text-wrap: balance; }
     .project-card--secondary .project-card__link { gap: 18px; }
-    .project-card--secondary .project-card__media { border-radius: 30px; box-shadow: none; }
-    #focusml .project-card__media { border-radius: 15px; }
+    .project-card--secondary .project-card__media { box-shadow: none; }
   }
 </style>
