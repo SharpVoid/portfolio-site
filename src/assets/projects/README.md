@@ -13,6 +13,7 @@ All images are individual cover assets exported by Figma, never whole-page scree
 
 The complete image fills are used where a node export includes external shadows or would bake in a narrow crop. The bank desktop is the individual cover export. CSS applies the approved corner radii and shadows. Full phone cover images are sized by height, preserving phone scale between viewport sizes.
 
-FocusML was updated on 2026-09-08 from user-supplied exports: `focusml-cover-rectanlge.png` (stored as `focus-desktop.png`) and `focusml-cover-square.png` (stored as `focus-mobile.png`). The approved references are the five `homepage-{width}.png` screenshots supplied in the conversation. Picture sources use the square composition at 390, 768 and 1440 px, and the rectangular composition at 1024 and 1920 px. Both use centered CSS cover cropping; the old desktop offset is no longer needed.
+FocusML was updated on 2026-09-08 from user-supplied exports: `focusml-cover-rectanlge.png` and `focusml-cover-square.png` (stored under their original filenames). The approved references are the five `homepage-{width}.png` screenshots supplied in the conversation. Picture sources use the square composition at 390, 768 and 1440 px, and the rectangular composition at 1024 and 1920 px. Both use centered CSS cover cropping; the old desktop offset is no longer needed.
 
 ProjectCard uses Astro getImage to generate AVIF and WebP at build time, limiting source dimensions to the resolution required by these covers. The shipped page does not request Figma or original PNGs. Temporary Figma asset URLs are deliberately not retained.
+

@@ -3,8 +3,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Footer from '../components/Footer.astro';
 import Profile from '../components/Profile.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import focusDesktop from '../assets/projects/focus-desktop.png';
-import focusMobile from '../assets/projects/focus-mobile.png';
+import focusRectangle from '../assets/projects/focusml-cover-rectanlge.png';
+import focusSquare from '../assets/projects/focusml-cover-square.png';
 import bankDesktop from '../assets/projects/bank-desktop.png';
 import bankMobile from '../assets/projects/bank-mobile.png';
 import arenaDesktop from '../assets/projects/arena-desktop.png';
@@ -17,12 +17,12 @@ const projects = [
   {
     id: 'focusml', title: 'FocusML',
     description: 'Веб-инструмент разметки и обучения моделей машинного зрения',
-    image: focusDesktop, mobileImage: focusMobile,
+    image: focusRectangle, mobileImage: focusSquare,
     alt: 'Интерфейс FocusML: разметка изображения арбузов с помощью текстового запроса',
     priority: true,
     variants: [
-      { image: focusMobile, media: '(min-width: 601px) and (max-width: 900px)' },
-      { image: focusMobile, media: '(min-width: 1025px) and (max-width: 1679px)' },
+      { image: focusSquare, media: '(min-width: 601px) and (max-width: 900px)' },
+      { image: focusSquare, media: '(min-width: 1025px) and (max-width: 1679px)' },
     ],
   },
   {
