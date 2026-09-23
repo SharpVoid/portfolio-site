@@ -136,72 +136,421 @@ const stages: Stage[] = [
 
 <script>
   const DESKTOP_QUERY = '(min-width: 901px)';
-  const DOWN_ACTIVATION = 0.56;
-  const UP_ACTIVATION = 0.2;
+  const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+  const STEP_THRESHOLD = 120;
+  const MAX_EVENT_DELTA = 60;
+  const GESTURE_IDLE_MS = 120;
+  const REST_LINE = 0.38;
+  const SPRING_STIFFNESS = 180;
+  const SPRING_DAMPING = 26;
+  const SPRING_TIME_SCALE = 1.5;
+  const MAX_TENSION_PX = 14;
+
   const story = document.querySelector<HTMLElement>('[data-case-story]');
   const stageElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-stage]'));
-  const triggers = stageElements.map((stage) => stage.querySelector<HTMLElement>('[data-case-trigger]')!);
+  const triggers = stageElements
+    .map((stage) => stage.querySelector<HTMLElement>('[data-case-trigger]'))
+    .filter((trigger): trigger is HTMLElement => Boolean(trigger));
   const visualElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-visual]'));
   const desktopQuery = window.matchMedia(DESKTOP_QUERY);
+  const reducedMotionQuery = window.matchMedia(REDUCED_MOTION_QUERY);
+
+  let activeIndex = 0;
+  // Discrete wheel state survives interrupted/unfinished scroll positioning.
+  let wheelOwnsState = false;
+  let accumulatedDelta = 0;
+  let gestureActive = false;
+  let committedInGesture = false;
+  let lastWheelTime = 0;
+  let gestureIdleTimer: number | undefined;
+  let fallbackFrame = 0;
+  let animationFrame = 0;
+  let animationMode: 'scroll' | 'tension' | null = null;
+  let animationLastTime = 0;
+  let springPosition = 0;
+  let springVelocity = 0;
+  let springTarget = 0;
+  let tensionValue = 0;
   let observer: IntersectionObserver | undefined;
-  let frame = 0;
-  let lastY = window.scrollY;
-  let direction = 1;
-  let activeId = '';
+  let previousScrollBehavior: string | null = null;
+  let lastObservedY = window.scrollY;
 
-  const updateStage = () => {
-    frame = 0;
-    if (!desktopQuery.matches || !story) return;
-    const y = window.scrollY;
-    if (y !== lastY) direction = y > lastY ? 1 : -1;
-    lastY = y;
-    const positions = triggers.map((trigger) => trigger.getBoundingClientRect());
-    let index = 0;
-    if (direction > 0) {
-      positions.forEach((rect, i) => {
-        if (rect.top <= window.innerHeight * DOWN_ACTIVATION) index = i;
-      });
-    } else {
-      index = positions.findIndex((rect) => rect.bottom >= window.innerHeight * UP_ACTIVATION);
-      if (index < 0) index = stageElements.length - 1;
-    }
-    const id = stageElements[index]?.dataset.caseStage;
-    if (!id || id === activeId) return;
-    activeId = id;
+  const clamp = (value: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, value));
+
+  const setActiveIndex = (nextIndex: number) => {
+    const boundedIndex = clamp(nextIndex, 0, stageElements.length - 1);
+    if (boundedIndex === activeIndex) return;
+    activeIndex = boundedIndex;
+    if (story) story.dataset.centered = String(activeIndex > 0);
+
+    stageElements.forEach((stage, index) => {
+      stage.classList.toggle('is-active', index === activeIndex);
+      stage.classList.remove('is-preview');
+      stage.style.removeProperty('--case-preview-progress');
+    });
+
+    visualElements.forEach((visual, index) => {
+      visual.dataset.active = String(index === activeIndex);
+    });
+  };
+
+  const clearPreview = () => {
     stageElements.forEach((stage) => {
-      stage.classList.toggle('is-active', stage.dataset.caseStage === id);
-    });
-    visualElements.forEach((visual) => {
-      visual.dataset.active = String(visual.dataset.caseVisual === id);
+      stage.classList.remove('is-preview');
+      stage.style.removeProperty('--case-preview-progress');
     });
   };
 
-  const scheduleUpdate = () => {
-    if (desktopQuery.matches && !frame) frame = requestAnimationFrame(updateStage);
+  const renderTension = (value: number) => {
+    if (!story) return;
+
+    tensionValue = clamp(value, -1, 1);
+    // Slow initial motion, with stronger resistance near the detent.
+    const progress = Math.pow(Math.abs(tensionValue), 1.35);
+    const direction = Math.sign(tensionValue);
+
+    story.classList.toggle('is-tensioning', progress > 0.001);
+    story.style.setProperty('--case-active-translate-y', `${-direction * progress * MAX_TENSION_PX}px`);
+    story.style.setProperty('--case-active-scale', String(1 - progress * 0.025));
+    story.style.setProperty('--case-active-opacity', String(1 - progress * 0.32));
+
+    clearPreview();
+    const previewIndex = activeIndex + direction;
+    const preview = stageElements[previewIndex];
+    if (preview && progress > 0) {
+      preview.classList.add('is-preview');
+      preview.style.setProperty('--case-preview-progress', String(progress));
+    }
   };
 
-  const setupObserver = () => {
+  const clearTension = () => {
+    if (!story) return;
+
+    tensionValue = 0;
+    springVelocity = 0;
+    story.classList.remove('is-tensioning');
+    story.style.removeProperty('--case-active-translate-y');
+    story.style.removeProperty('--case-active-scale');
+    story.style.removeProperty('--case-active-opacity');
+    clearPreview();
+  };
+
+  const restoreScrollBehavior = () => {
+    if (previousScrollBehavior === null) return;
+    document.documentElement.style.scrollBehavior = previousScrollBehavior;
+    previousScrollBehavior = null;
+  };
+
+  const cancelAnimation = () => {
+    const wasScrolling = animationMode === 'scroll';
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = 0;
+    animationMode = null;
+    springVelocity = 0;
+    if (wasScrolling) restoreScrollBehavior();
+  };
+
+  const finishAnimation = () => {
+    const completedMode = animationMode;
+
+    if (completedMode === 'scroll') {
+      window.scrollTo(0, springTarget);
+      lastObservedY = window.scrollY;
+      restoreScrollBehavior();
+    } else {
+      clearTension();
+    }
+
+    animationFrame = 0;
+    animationMode = null;
+    springVelocity = 0;
+
+    if (completedMode === 'tension') scheduleFallback();
+  };
+
+  const runSpring = (time: number) => {
+    if (!animationMode) return;
+
+    const deltaTime = Math.min(
+      0.032,
+      Math.max(0.001, ((time - animationLastTime) / 1000) * SPRING_TIME_SCALE),
+    );
+    animationLastTime = time;
+    const distance = springTarget - springPosition;
+    const acceleration = distance * SPRING_STIFFNESS - springVelocity * SPRING_DAMPING;
+
+    springVelocity += acceleration * deltaTime;
+    const nextPosition = springPosition + springVelocity * deltaTime;
+    // Never overshoot or move against the user's committed direction.
+    springPosition = clamp(
+      nextPosition,
+      Math.min(springPosition, springTarget),
+      Math.max(springPosition, springTarget),
+    );
+
+    if (animationMode === 'scroll') {
+      window.scrollTo(0, springPosition);
+    } else {
+      renderTension(springPosition);
+    }
+
+    if (Math.abs(distance) < 0.5 && Math.abs(springVelocity) < 0.5) {
+      finishAnimation();
+      return;
+    }
+
+    animationFrame = requestAnimationFrame(runSpring);
+  };
+
+  const startSpring = (mode: 'scroll' | 'tension', position: number, target: number) => {
+    cancelAnimation();
+    animationMode = mode;
+
+    if (mode === 'scroll') {
+      previousScrollBehavior = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = 'auto';
+    }
+
+    springPosition = position;
+    springTarget = target;
+    springVelocity = 0;
+    animationLastTime = performance.now();
+    animationFrame = requestAnimationFrame(runSpring);
+  };
+
+  const restPosition = (index: number) => {
+    if (index === 0) return window.innerHeight * REST_LINE;
+    const content = stageElements[index]?.querySelector<HTMLElement>('.case-stage__content');
+    const triggerOffset = triggers[index]?.offsetTop ?? 0;
+    return window.innerHeight / 2 - (content?.offsetHeight ?? 0) / 2 + triggerOffset;
+  };
+
+  const springToActiveStage = (direction: number) => {
+    const trigger = triggers[activeIndex];
+    if (!trigger) return;
+
+    const triggerDocumentY = window.scrollY + trigger.getBoundingClientRect().top;
+    const maximumScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const requested = clamp(triggerDocumentY - restPosition(activeIndex), 0, maximumScroll);
+    const destination = direction > 0
+      ? Math.max(window.scrollY, requested)
+      : Math.min(window.scrollY, requested);
+
+    startSpring('scroll', window.scrollY, destination);
+  };
+
+  const syncFromPosition = () => {
+    fallbackFrame = 0;
+    if (!story || !desktopQuery.matches || gestureActive || animationMode || wheelOwnsState || accumulatedDelta !== 0) return;
+
+    let nextIndex = 0;
+
+    triggers.forEach((trigger, index) => {
+      if (trigger.getBoundingClientRect().top <= restPosition(index) + 2) nextIndex = index;
+    });
+
+    setActiveIndex(nextIndex);
+  };
+
+  const scheduleFallback = () => {
+    if (
+      !desktopQuery.matches ||
+      gestureActive ||
+      animationMode ||
+      fallbackFrame
+    ) {
+      return;
+    }
+
+    fallbackFrame = requestAnimationFrame(syncFromPosition);
+  };
+
+  const isStoryInWorkingArea = () => {
+    if (!story) return false;
+    const bounds = story.getBoundingClientRect();
+    const restY = window.innerHeight * REST_LINE;
+    return bounds.top <= restY && bounds.bottom >= restY;
+  };
+
+  const normalizeWheelDelta = (event: WheelEvent) => {
+    const multiplier =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? window.innerHeight
+          : 1;
+
+    return clamp(event.deltaY * multiplier, -MAX_EVENT_DELTA, MAX_EVENT_DELTA);
+  };
+
+  const finishGesture = () => {
+    gestureActive = false;
+    committedInGesture = false;
+    gestureIdleTimer = undefined;
+    // Keep unfinished progress: separate light wheel ticks continue the pull.
+    // Only an explicit reverse movement or native navigation releases it.
+  };
+
+  const armGestureEnd = () => {
+    if (gestureIdleTimer) window.clearTimeout(gestureIdleTimer);
+    gestureIdleTimer = window.setTimeout(finishGesture, GESTURE_IDLE_MS);
+  };
+
+  const beginGesture = () => {
+    gestureActive = true;
+    committedInGesture = false;
+    // Keep settling until another step actually reaches its threshold.
+    // A light reverse tick must not strand the active block between positions.
+  };
+
+  const commitStep = (direction: number) => {
+    committedInGesture = true;
+    accumulatedDelta = 0;
+    clearTension();
+    setActiveIndex(activeIndex + direction);
+    springToActiveStage(direction);
+  };
+
+  const onWheel = (event: WheelEvent) => {
+    if (
+      !story ||
+      !desktopQuery.matches ||
+      reducedMotionQuery.matches ||
+      event.ctrlKey ||
+      Math.abs(event.deltaX) >= Math.abs(event.deltaY)
+    ) {
+      return;
+    }
+
+    const delta = normalizeWheelDelta(event);
+    const direction = Math.sign(delta);
+    if (!direction) return;
+
+    if (!event.cancelable) return;
+    const now = performance.now();
+    const continuesGesture = gestureActive && now - lastWheelTime < GESTURE_IDLE_MS;
+
+    // Direction jitter is still the same gesture, including after commitment.
+    if (continuesGesture && committedInGesture) {
+      event.preventDefault();
+      lastWheelTime = now;
+      armGestureEnd();
+      return;
+    }
+
+    if (!animationMode && accumulatedDelta === 0 && !gestureActive) syncFromPosition();
+
+    const isOutwardBoundary =
+      (activeIndex === 0 && direction < 0) ||
+      (activeIndex === stageElements.length - 1 && direction > 0);
+
+    // Finish the last committed step before releasing native page scrolling.
+    if (animationMode === 'scroll' && isOutwardBoundary) {
+      event.preventDefault();
+      return;
+    }
+
+    if (!isStoryInWorkingArea() || (isOutwardBoundary && accumulatedDelta === 0)) {
+      resetInteraction();
+      return;
+    }
+
+    event.preventDefault();
+    wheelOwnsState = true;
+    if (!continuesGesture) beginGesture();
+    lastWheelTime = now;
+    armGestureEnd();
+
+    // Reverse impulses first unwind existing tension, rather than initiating
+    // an opposite step while the finger is still finishing its previous swipe.
+    const previousDirection = Math.sign(accumulatedDelta);
+    const nextDelta = accumulatedDelta + delta;
+    accumulatedDelta = previousDirection && Math.sign(nextDelta) !== previousDirection
+      ? 0
+      : nextDelta;
+
+    renderTension(accumulatedDelta / STEP_THRESHOLD);
+
+    if (Math.abs(accumulatedDelta) >= STEP_THRESHOLD) {
+      commitStep(Math.sign(accumulatedDelta));
+    }
+  };
+
+  const resetInteraction = () => {
+    if (gestureIdleTimer) window.clearTimeout(gestureIdleTimer);
+    gestureIdleTimer = undefined;
+    gestureActive = false;
+    committedInGesture = false;
+    wheelOwnsState = false;
+    accumulatedDelta = 0;
+    cancelAnimation();
+    clearTension();
+    lastObservedY = window.scrollY;
+  };
+
+  const onNativeScroll = () => {
+    const moved = Math.abs(window.scrollY - lastObservedY) > 0.5;
+    lastObservedY = window.scrollY;
+    if (animationMode) return;
+    if (moved) {
+      resetInteraction();
+      scheduleFallback();
+    }
+  };
+
+  const onNativeNavigation = () => {
+    resetInteraction();
+    scheduleFallback();
+  };
+
+  const setupFallback = () => {
     observer?.disconnect();
-    if (!story || !desktopQuery.matches) return;
-    // Reserve the space visually left by the scaled first block.
-    // Keep this constant across active states so headings never jump.
+    resetInteraction();
+
+    if (!story || !desktopQuery.matches) {
+      cancelAnimation();
+      clearTension();
+      return;
+    }
+
+    const visual = story.querySelector<HTMLElement>('.case-story__visual');
+    const visualHeight = visual?.offsetHeight ?? 577;
+    story.style.setProperty('--case-centered-offset', `${Math.max(16, (window.innerHeight - visualHeight) / 2)}px`);
+    const lastContent = stageElements.at(-1)?.querySelector<HTMLElement>('.case-stage__content');
+    story.style.setProperty('--case-last-visual-space', `${(visualHeight + (lastContent?.offsetHeight ?? 0)) / 2}px`);
+    story.dataset.centered = String(activeIndex > 0);
+
     const about = stageElements[0]?.querySelector<HTMLElement>('.case-stage__content');
-    story.style.setProperty('--case-problem-extra-gap', `${(about?.offsetHeight ?? 0) * (1 - 0.6667)}px`);
-    observer = new IntersectionObserver(scheduleUpdate, {
-      // IntersectionObserver percentages are relative to width, not height.
-      rootMargin: `-${window.innerHeight * UP_ACTIVATION}px 0px -${window.innerHeight * (1 - DOWN_ACTIVATION)}px 0px`,
+    story.style.setProperty(
+      '--case-problem-extra-gap',
+      `${(about?.offsetHeight ?? 0) * (1 - 0.6667)}px`,
+    );
+
+    const restY = window.innerHeight * REST_LINE;
+    observer = new IntersectionObserver(scheduleFallback, {
+      rootMargin: `-${restY}px 0px -${Math.max(0, window.innerHeight - restY - 1)}px 0px`,
       threshold: 0,
     });
+
     triggers.forEach((trigger) => observer?.observe(trigger));
-    scheduleUpdate();
+    syncFromPosition();
   };
 
-  setupObserver();
-  // A small rAF-coalesced fallback also handles jumps that skip a trigger entirely.
-  window.addEventListener('scroll', scheduleUpdate, { passive: true });
-  window.addEventListener('resize', setupObserver);
-  desktopQuery.addEventListener('change', setupObserver);
-  document.fonts.ready.then(setupObserver);
+  window.addEventListener('wheel', onWheel, { passive: false });
+  window.addEventListener('scroll', onNativeScroll, { passive: true });
+  window.addEventListener('pointerdown', onNativeNavigation, { passive: true });
+  window.addEventListener('touchstart', onNativeNavigation, { passive: true });
+  window.addEventListener('keydown', (event) => {
+    if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
+      onNativeNavigation();
+    }
+  });
+  window.addEventListener('resize', setupFallback);
+  desktopQuery.addEventListener('change', setupFallback);
+  reducedMotionQuery.addEventListener('change', setupFallback);
+  document.fonts.ready.then(setupFallback);
+  setupFallback();
 </script>
 
 <style>
@@ -209,8 +558,10 @@ const stages: Stage[] = [
     --case-sticky-offset: 72px;
     --case-stage-spacing: 150px;
     --case-inactive-opacity: 0.28;
-    --case-transition-duration: 220ms;
-    --case-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --case-transition-duration: 420ms;
+    --case-image-fade-duration: 340ms;
+    --case-image-motion-duration: 440ms;
+    --case-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     padding-block: 43px 120px;
   }
 
@@ -289,7 +640,7 @@ const stages: Stage[] = [
   }
 
   .case-stage:last-child {
-    min-height: 45vh;
+    min-height: max(50vh, calc(62vh - 80px), var(--case-last-visual-space, 0px));
   }
 
   .case-stage__content {
@@ -317,8 +668,25 @@ const stages: Stage[] = [
   }
 
   .case-stage.is-active .case-stage__content {
-    opacity: 1;
-    transform: scale(1);
+    opacity: var(--case-active-opacity, 1);
+    transform:
+      translateY(var(--case-active-translate-y, 0px))
+      scale(var(--case-active-scale, 1));
+  }
+
+  .case-story.is-tensioning .case-stage.is-active .case-stage__content,
+  .case-story.is-tensioning .case-stage.is-preview .case-stage__content {
+    transition: none;
+    will-change: opacity, transform;
+  }
+
+  .case-stage.is-preview .case-stage__content {
+    opacity: calc(
+      var(--case-inactive-opacity) + var(--case-preview-progress, 0) * 0.18
+    );
+    transform:
+      translateY(calc(var(--case-active-translate-y, 0px) * 0.6))
+      scale(calc(0.6667 + var(--case-preview-progress, 0) * 0.1));
   }
 
   .case-stage h2 {
@@ -370,6 +738,13 @@ const stages: Stage[] = [
     border: 2px solid #ebeff9;
     border-radius: 30px;
     background: white;
+    transition: top var(--case-image-motion-duration) var(--case-ease-out);
+  }
+
+  @media (min-width: 901px) {
+    .case-story[data-centered='true'] .case-story__visual {
+      top: var(--case-centered-offset);
+    }
   }
 
   .case-story__image {
@@ -379,17 +754,17 @@ const stages: Stage[] = [
     height: 100%;
     object-fit: cover;
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(13px) scale(0.985);
     transition:
-      opacity var(--case-transition-duration) var(--case-ease-out),
-      transform var(--case-transition-duration) var(--case-ease-out);
+      opacity var(--case-image-fade-duration) var(--case-ease-out),
+      transform var(--case-image-motion-duration) var(--case-ease-out);
     will-change: opacity, transform;
   }
 
   .case-story__image[data-active='true'] {
     z-index: 1;
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 
   /* The Figma export is 577 x 586: the final 9 rows are transparent.
@@ -519,6 +894,10 @@ const stages: Stage[] = [
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .case-story__visual {
+      transition: none;
+    }
+
     .case-stage__content {
       transition: none;
     }
