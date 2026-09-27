@@ -1,5 +1,9 @@
+---
+import ContactLinks from './ContactLinks.astro';
+---
 <footer class="site-footer">
   <p>Москва, Россия · GMT/UTC+3<span data-moscow-clock hidden> · <time></time></span></p>
+  <div class="site-footer__links"><ContactLinks /></div>
 </footer>
 
 <script>
@@ -28,6 +32,7 @@
 
 <style>
   .site-footer { grid-column: 1; grid-row: 1; align-self: end; text-align: center; color: #747474; font-family: var(--font-ui); }
+  .site-footer__links { display: none; }
   .site-footer p { margin: 0; font-size: 16px; line-height: 19px; }
   @media (min-width: 1025px) {
     .site-footer {
@@ -39,5 +44,12 @@
   }
   @media (max-width: 1024px) {
     .site-footer { grid-row: auto; margin-top: 64px; }
+  }
+  @media (min-width: 601px) and (max-width: 900px) {
+    .site-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .site-footer__links { display: block; flex: 1; max-width: 385px; }
+  }
+  @media (max-width: 600px) {
+    .site-footer__links { display: block; margin-top: 24px; }
   }
 </style>
