@@ -484,6 +484,12 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     display: block; width: 100%; max-height: 100%; border-radius: 30px;
   }
   .case-story__image :global(img) { height: auto; object-fit: contain; }
+  /* Inward stroke preserves the image's dimensions and surrounding layout. */
+  :is([data-case-visual='problem'], [data-case-visual='solution'],
+    [data-stage-image='problem'], [data-stage-image='solution']) :global(img) {
+    outline: 2px solid #eaeff9;
+    outline-offset: -2px;
+  }
   .case-story__image video { height: 100%; object-fit: cover; }
   .case-story__image[data-case-visual='shared-account'] video,
   .case-stage__mobile-visual[data-stage-image='shared-account'] video { object-position: 54% center; }
@@ -523,6 +529,8 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     }
     .case-stage__mobile-visual { display: block; order: -1; width: 100%; overflow: hidden; border-radius: 30px; }
     .case-stage__mobile-visual :global(img) { width: 100%; height: auto; }
+    .case-stage__mobile-visual[data-stage-image='problem'] { border-radius: 15px; }
+    .case-stage__mobile-visual :global(img) { border-radius: inherit; }
     .case-stage__mobile-visual video { display: block; width: 100%; height: 673px; object-fit: cover; }
     .case-stage__mobile-visual[data-stage-image='about'] video { height: auto; aspect-ratio: 1; border: 2px solid #ebeff9; border-radius: 30px; }
     .case-story__visual { display: none; }
@@ -539,6 +547,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     .case-stage h2 { margin-bottom: 12px; font-size: 20px; line-height: 26px; }
     .case-stage__body { gap: 18px; font-size: 14px; line-height: 18px; }
     .case-stage__mobile-visual { border-radius: 20px; }
+    .case-stage__mobile-visual[data-stage-image='solution'] { border-radius: 15px; }
     .case-stage__mobile-visual video { height: auto; aspect-ratio: 330 / 673; }
     .case-stage__mobile-visual[data-stage-image='about'] video { border-radius: 20px; }
     .case-project-nav { margin-top: 150px; gap: 12px; }
