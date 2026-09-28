@@ -480,7 +480,8 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
   const setupFallback = () => {
     if (destroyed || suspended) return;
-    const preserveMobileStep = mobileEnabled() && wheelOwnsState;
+    const preserveStep = wheelOwnsState && (mobileEnabled()
+      || (desktopQuery.matches && activeIndex > 0 && isStoryInWorkingArea()));
     touchPoint = null;
     nativeTouch = false;
     observer?.disconnect();
@@ -501,7 +502,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     });
 
     triggers.forEach((trigger) => observer?.observe(trigger));
-    if (preserveMobileStep && !reducedMotionQuery.matches) {
+    if (preserveStep && !reducedMotionQuery.matches) {
       wheelOwnsState = true;
       springToActiveStage(0);
     } else syncFromPosition();
@@ -510,6 +511,11 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   window.addEventListener('wheel', onWheel, { passive: false, signal: listeners.signal });
   window.addEventListener('scroll', onNativeScroll, { passive: true, signal: listeners.signal });
   window.addEventListener('pointerdown', (event) => {
+    // A content click is not a request to interrupt the committed scroll target.
+    // Scrollbar dragging and explicit keyboard/native navigation still release it.
+    if (desktopQuery.matches && animationMode === 'scroll' && event.button === 0
+      && event.clientX < document.documentElement.clientWidth
+      && event.clientY < document.documentElement.clientHeight) return;
     if (!(event.pointerType === 'touch' && mobileEnabled())) onNativeNavigation();
   }, { passive: true, signal: listeners.signal });
   window.addEventListener('touchstart', onTouchStart, { passive: true, signal: listeners.signal });
@@ -547,6 +553,9 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       wheelOwnsState = true;
       lastObservedY = window.scrollY;
       triggers.forEach(trigger => observer?.observe(trigger));
+      if (desktopQuery.matches && activeIndex > 0 && isStoryInWorkingArea() && !reducedMotionQuery.matches) {
+        springToActiveStage(0);
+      }
     },
     destroy() {
       if (destroyed) return;

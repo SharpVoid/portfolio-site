@@ -47,6 +47,7 @@ try {
       await page.mouse.click(2, 2);
       assert.equal(await dialog.evaluate(el => el.open), false);
       assert.equal(await page.evaluate(() => document.documentElement.style.overflow), '');
+      await page.waitForTimeout(1200); // Desktop resumes the active step's centering spring.
     }
     assert.deepEqual(errors, []);
     await page.close();

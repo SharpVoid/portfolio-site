@@ -121,8 +121,26 @@ try {
   await page.mouse.wheel(0, -8); await pause(1100);
   await expect('problem', true);
 
+  // Opening a preview from an off-anchor native position must not freeze that offset.
+  await page.evaluate(() => scrollBy(0, 220));
+  await pause(200);
+  await page.locator('[data-case-visual="problem"] img').focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+  await pause(1200);
+  await expect('problem', true);
+
+  // A normal content click must not strand the settling scroll halfway.
+  await enter();
+  await page.mouse.wheel(0, 60); await pause(30);
+  await page.mouse.wheel(0, 60); await pause(80);
+  await page.mouse.click(110, 400);
+  await pause(1200);
+  await expect('problem', true);
+
   await page.setViewportSize({ width: 1200, height: 800 });
-  await pause(300);
+  await pause(1200);
+  await expect('problem', true);
   await step(-1); await expect('about');
   await step(1); await expect('problem', true);
   await page.setViewportSize({ width: 1920, height: 700 });
