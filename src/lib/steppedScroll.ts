@@ -61,6 +61,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const listeners = new AbortController();
   let destroyed = false;
+  let suspended = false;
   let activeIndex = Math.min(triggers.length - 1, Math.max(0, options.initialIndex ?? 0));
   // Discrete wheel state survives interrupted/unfinished scroll positioning.
   let wheelOwnsState = false;
@@ -83,7 +84,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   let touchMode: 'pending' | 'controlled' | 'native' = 'native';
   let nativeTouch = false;
   const mobileEnabled = () => Boolean(options.touch) && !desktopQuery.matches;
-  const enabled = () => desktopQuery.matches || mobileEnabled();
+  const enabled = () => !suspended && (desktopQuery.matches || mobileEnabled());
 
   const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, value));
@@ -287,6 +288,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
   const onWheel = (event: WheelEvent) => {
     if (
+      suspended ||
       !story ||
       !desktopQuery.matches ||
       reducedMotionQuery.matches ||
@@ -352,6 +354,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     document.documentElement.style.scrollBehavior = behavior;
   };
   const onTouchStart = (event: TouchEvent) => {
+    if (suspended) return;
     if (!mobileEnabled() || reducedMotionQuery.matches) { onNativeNavigation(); return; }
     const target = event.target as Element;
     if (event.touches.length !== 1 || target.closest('a, button, input, textarea, select, [contenteditable="true"], [data-scroll-native]')) {
@@ -442,6 +445,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   };
 
   const onNativeScroll = () => {
+    if (suspended) return;
     const previousY = lastObservedY;
     const moved = Math.abs(window.scrollY - lastObservedY) > 0.5;
     lastObservedY = window.scrollY;
@@ -475,7 +479,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   };
 
   const setupFallback = () => {
-    if (destroyed) return;
+    if (destroyed || suspended) return;
     const preserveMobileStep = mobileEnabled() && wheelOwnsState;
     touchPoint = null;
     nativeTouch = false;
@@ -529,6 +533,21 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       wheelOwnsState, animationMode,
     }),
     refresh: setupFallback,
+    suspend() {
+      suspended = true;
+      touchPoint = null;
+      nativeTouch = false;
+      observer?.disconnect();
+      resetInteraction();
+    },
+    resume() {
+      if (destroyed || !suspended) return;
+      suspended = false;
+      options.onMeasure?.(activeIndex);
+      wheelOwnsState = true;
+      lastObservedY = window.scrollY;
+      triggers.forEach(trigger => observer?.observe(trigger));
+    },
     destroy() {
       if (destroyed) return;
       destroyed = true;

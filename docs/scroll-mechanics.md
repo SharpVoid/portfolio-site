@@ -244,6 +244,10 @@ onMeasure вызывается перед созданием IO на desktop. О
 сделал бы reusable core зависимым от банковского кейса.
 
 API контроллера:
+- suspend()/resume(): временная пауза ввода и spring без смены activeIndex.
+  Doverie вызывает их при открытии/закрытии нативного image dialog; фон блокируется
+  через html overflow:hidden с восстановлением предыдущего значения. Resume
+  измеряет геометрию и сохраняет текущий шаг, не перескакивая по fallback.
 - getState(): диагностический снимок activeIndex, accumulatedDelta,
   gestureActive, committedInGesture, wheelOwnsState, animationMode.
 - refresh(): reset + новые измерения/IO + синхронизация. После динамической

@@ -85,6 +85,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
       <div class="case-hero__media">
         <Image
           src={doverieHero}
+          data-image-preview={doverieHero.src} role="button" tabindex="0" aria-haspopup="dialog"
           alt="Главный экран банка «Доверие» на фоне мягкого голубого градиента"
           widths={[640, 960, 1322, 2080]}
           sizes="(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px"
@@ -138,7 +139,8 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
 
             <div class="case-stage__mobile-visual" data-stage-image={stage.id} data-active={index === 0 ? 'true' : 'false'}>
               {stage.image ? (
-                <Image src={stage.image} alt={stage.alt} quality={90} loading="lazy" />
+                <Image src={stage.image} alt={stage.alt} quality={90} loading="lazy"
+                  data-image-preview={stage.image.src} role="button" tabindex="0" aria-haspopup="dialog" />
               ) : (
                 <video src={stage.video} poster={stage.poster} data-case-video
                   muted loop playsinline controls preload="none" aria-label={stage.alt}></video>
@@ -154,7 +156,8 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
             data-active={index === 0 ? 'true' : 'false'} inert={index !== 0}
             aria-hidden={index !== 0 ? 'true' : undefined}>
             {stage.image ? (
-              <Image src={stage.image} alt={stage.alt} quality={90} loading="eager" />
+              <Image src={stage.image} alt={stage.alt} quality={90} loading="eager"
+                data-image-preview={stage.image.src} role="button" tabindex="0" aria-haspopup="dialog" />
             ) : (
               <video src={stage.video} poster={stage.poster} data-case-video
                 muted loop playsinline controls preload="none" aria-label={stage.alt}></video>
@@ -183,6 +186,10 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
       </div>
     </section>
   </main>
+  <dialog class="case-image-dialog" aria-label="Просмотр изображения" data-scroll-native>
+    <button class="case-image-dialog__close" type="button" aria-label="Закрыть изображение" autofocus>×</button>
+    <img class="case-image-dialog__image" alt="" />
+  </dialog>
 </BaseLayout>
 
 <script>
@@ -195,6 +202,49 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     .map((stage) => stage.querySelector<HTMLElement>('[data-case-trigger]'))
     .filter((trigger): trigger is HTMLElement => Boolean(trigger));
   const visualElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-visual]'));
+  let scrollController: ReturnType<typeof createSteppedScroll> | undefined;
+  const imageDialog = document.querySelector<HTMLDialogElement>('.case-image-dialog')!;
+  const dialogImage = imageDialog.querySelector<HTMLImageElement>('img')!;
+  let previewTrigger: HTMLImageElement | null = null;
+  let previousOverflow = '';
+  const openImage = (image: HTMLImageElement) => {
+    if (imageDialog.open) return;
+    previewTrigger = image;
+    dialogImage.src = image.dataset.imagePreview!;
+    dialogImage.alt = image.alt;
+    scrollController?.suspend();
+    previousOverflow = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    imageDialog.showModal();
+    syncVideos();
+  };
+  document.querySelectorAll<HTMLImageElement>('[data-image-preview]').forEach(image => {
+    image.addEventListener('click', () => openImage(image));
+    image.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        event.stopPropagation();
+        openImage(image);
+      }
+    });
+  });
+  imageDialog.querySelector('button')!.addEventListener('click', () => imageDialog.close());
+  imageDialog.addEventListener('click', event => {
+    if (event.target === dialogImage) imageDialog.close();
+    if (event.target === imageDialog) {
+      const rect = imageDialog.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) imageDialog.close();
+    }
+  });
+  imageDialog.addEventListener('close', () => {
+    document.documentElement.style.overflow = previousOverflow;
+    scrollController?.resume();
+    syncVideos();
+    previewTrigger?.focus({ preventScroll: true });
+  });
+  document.addEventListener('astro:before-swap', () => {
+    if (imageDialog.open) imageDialog.close();
+  }, { once: true });
 
 
   const videos = [...document.querySelectorAll<HTMLVideoElement>('[data-case-video]')];
@@ -204,7 +254,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
   function syncVideos() {
     videos.forEach((video) => {
       const active = video.closest<HTMLElement>('[data-case-visual], [data-stage-image]')?.dataset.active !== 'false';
-      if (visibleVideos.has(video) && active && !reducedMotion.matches && !document.hidden) {
+      if (visibleVideos.has(video) && active && !reducedMotion.matches && !document.hidden && !imageDialog.open) {
         void video.play().catch(() => { /* Native controls remain available if autoplay is blocked. */ });
       } else {
         video.pause();
@@ -360,12 +410,34 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
 
       },
     });
+    scrollController = controller;
     // Tear down before an Astro client-side navigation; harmless without a router.
     document.addEventListener('astro:before-swap', () => controller.destroy(), { once: true });
   }
 </script>
 
 <style>
+  :global(html:has(.case-image-dialog[open])) { scrollbar-gutter: stable; }
+  :global([data-image-preview]) { cursor: zoom-in; }
+  :global([data-image-preview]:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+  .case-image-dialog {
+    margin: auto; padding: 60px 20px 20px;
+    width: fit-content; max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px);
+    border: 2px solid #eaeff9; border-radius: 30px; background: white;
+    overscroll-behavior: contain;
+  }
+  @supports (corner-shape: squircle) { .case-image-dialog { corner-shape: squircle; } }
+  .case-image-dialog::backdrop { background: rgb(0 0 0 / 50%); }
+  .case-image-dialog__image {
+    display: block; width: auto; height: auto; max-width: min(1100px, calc(100vw - 76px));
+    max-height: calc(100dvh - 116px); object-fit: contain; border-radius: 16px; cursor: zoom-out;
+  }
+  .case-image-dialog__close {
+    position: absolute; top: 12px; right: 12px; width: 40px; height: 40px;
+    display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
+    background: #ebf9ff; color: #004d6e; font: 28px/1 var(--font-sans); cursor: pointer;
+  }
+  .case-image-dialog__close:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   .case-page {
     --case-sticky-offset: 72px;
     --case-stage-spacing: 150px;
