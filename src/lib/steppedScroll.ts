@@ -18,6 +18,13 @@ export interface SteppedScrollOptions {
   springStiffness?: number;
   springDamping?: number;
   springTimeScale?: number;
+  /** Opt-in touch adapter below desktopQuery; uses the same step state and spring. */
+  touch?: {
+    threshold?: number;
+    axisThreshold?: number;
+    /** Document scroll range for reading a tall step before changing steps. */
+    scrollRange?: (index: number) => { start: number; end: number };
+  };
 }
 
 /** Browser-only, window-scrolling controller. One active controller per page.
@@ -46,6 +53,11 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     throw new Error('steppedScroll: invalid options');
   }
   const desktopQuery = window.matchMedia(DESKTOP_QUERY);
+  const touchThreshold = options.touch?.threshold ?? 80;
+  const touchAxisThreshold = options.touch?.axisThreshold ?? 8;
+  if (![touchThreshold, touchAxisThreshold].every(value => Number.isFinite(value) && value > 0)) {
+    throw new Error('steppedScroll: invalid touch options');
+  }
   const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
   const listeners = new AbortController();
   let destroyed = false;
@@ -67,6 +79,11 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   let observer: IntersectionObserver | undefined;
   let previousScrollBehavior: string | null = null;
   let lastObservedY = window.scrollY;
+  let touchPoint: { x: number; y: number } | null = null;
+  let touchMode: 'pending' | 'controlled' | 'native' = 'native';
+  let nativeTouch = false;
+  const mobileEnabled = () => Boolean(options.touch) && !desktopQuery.matches;
+  const enabled = () => desktopQuery.matches || mobileEnabled();
 
   const clamp = (value: number, min: number, max: number) =>
     Math.min(max, Math.max(min, value));
@@ -179,7 +196,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     const triggerDocumentY = window.scrollY + trigger.getBoundingClientRect().top;
     const maximumScroll = document.documentElement.scrollHeight - window.innerHeight;
     const requested = clamp(triggerDocumentY - restPosition(activeIndex), 0, maximumScroll);
-    const destination = direction > 0
+    const destination = direction === 0 ? requested : direction > 0
       ? Math.max(window.scrollY, requested)
       : Math.min(window.scrollY, requested);
 
@@ -188,7 +205,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
   const syncFromPosition = () => {
     fallbackFrame = 0;
-    if (!story || !desktopQuery.matches || gestureActive || animationMode || wheelOwnsState || accumulatedDelta !== 0) return;
+    if (!story || !enabled() || gestureActive || animationMode || wheelOwnsState || accumulatedDelta !== 0) return;
 
     let nextIndex = 0;
 
@@ -201,7 +218,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
   const scheduleFallback = () => {
     if (
-      !desktopQuery.matches ||
+      !enabled() ||
       gestureActive ||
       animationMode ||
       fallbackFrame
@@ -258,6 +275,16 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     springToActiveStage(direction);
   };
 
+  const accumulate = (delta: number, threshold: number) => {
+    // Reverse input unwinds tension before it can begin the opposite step.
+    const previousDirection = Math.sign(accumulatedDelta);
+    const nextDelta = accumulatedDelta + delta;
+    accumulatedDelta = previousDirection && Math.sign(nextDelta) !== previousDirection
+      ? 0 : nextDelta;
+    renderTension(accumulatedDelta / threshold);
+    if (Math.abs(accumulatedDelta) >= threshold) commitStep(Math.sign(accumulatedDelta));
+  };
+
   const onWheel = (event: WheelEvent) => {
     if (
       !story ||
@@ -310,17 +337,96 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
     // Reverse impulses first unwind existing tension, rather than initiating
     // an opposite step while the finger is still finishing its previous swipe.
-    const previousDirection = Math.sign(accumulatedDelta);
-    const nextDelta = accumulatedDelta + delta;
-    accumulatedDelta = previousDirection && Math.sign(nextDelta) !== previousDirection
-      ? 0
-      : nextDelta;
+    accumulate(delta, STEP_THRESHOLD);
+  };
 
-    renderTension(accumulatedDelta / STEP_THRESHOLD);
-
-    if (Math.abs(accumulatedDelta) >= STEP_THRESHOLD) {
-      commitStep(Math.sign(accumulatedDelta));
+  const touchRange = (index: number) => {
+    const start = window.scrollY + triggers[index].getBoundingClientRect().top - restPosition(index);
+    return options.touch?.scrollRange?.(index) ?? { start, end: start };
+  };
+  const instantScroll = (y: number) => {
+    const behavior = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, y);
+    lastObservedY = window.scrollY;
+    document.documentElement.style.scrollBehavior = behavior;
+  };
+  const onTouchStart = (event: TouchEvent) => {
+    if (!mobileEnabled() || reducedMotionQuery.matches) { onNativeNavigation(); return; }
+    const target = event.target as Element;
+    if (event.touches.length !== 1 || target.closest('a, button, input, textarea, select, [contenteditable="true"], [data-scroll-native]')) {
+      touchPoint = null;
+      nativeTouch = false;
+      onNativeNavigation();
+      return;
     }
+    if (!animationMode && accumulatedDelta === 0) syncFromPosition();
+    const point = event.touches[0];
+    touchPoint = { x: point.clientX, y: point.clientY };
+    touchMode = 'pending';
+    nativeTouch = true;
+    beginGesture();
+  };
+  const onTouchMove = (event: TouchEvent) => {
+    if (!touchPoint || !mobileEnabled() || reducedMotionQuery.matches) return;
+    if (event.touches.length !== 1) { onTouchEnd(); nativeTouch = false; resetInteraction(); return; }
+    const point = event.touches[0];
+    const delta = touchPoint.y - point.clientY;
+    const horizontal = point.clientX - touchPoint.x;
+    if (touchMode === 'pending') {
+      if (Math.max(Math.abs(delta), Math.abs(horizontal)) < touchAxisThreshold) return;
+      const first = touchRange(0).start;
+      const last = touchRange(triggers.length - 1).end;
+      const outside = (window.scrollY < first - 2 && window.scrollY + delta < first)
+        || (window.scrollY > last + 2 && window.scrollY + delta > last);
+      const outward = (activeIndex === 0 && delta < 0 && window.scrollY <= first + 2)
+        || (activeIndex === triggers.length - 1 && delta > 0 && window.scrollY >= last - 2);
+      touchMode = Math.abs(horizontal) >= Math.abs(delta) || outside || (outward && !animationMode && accumulatedDelta === 0)
+        ? 'native' : 'controlled';
+      if (touchMode === 'native') {
+        if (Math.abs(horizontal) >= Math.abs(delta)) nativeTouch = false;
+        resetInteraction();
+        return;
+      }
+      if (event.cancelable && (window.scrollY < first - 2 || window.scrollY > last + 2)) {
+        event.preventDefault();
+        setActiveIndex(window.scrollY < first ? 0 : triggers.length - 1);
+        wheelOwnsState = true;
+        committedInGesture = true;
+        springToActiveStage(0);
+        return;
+      }
+    }
+    if (touchMode !== 'controlled' || !event.cancelable) return;
+    event.preventDefault();
+    touchPoint = { x: point.clientX, y: point.clientY };
+    wheelOwnsState = true;
+    if (committedInGesture) return;
+    if (animationMode === 'scroll') {
+      const outward = (activeIndex === 0 && delta < 0) || (activeIndex === triggers.length - 1 && delta > 0);
+      if (!outward) accumulate(delta, touchThreshold);
+      return;
+    }
+    const range = touchRange(activeIndex);
+    // Let tall content be read, without allowing one fast swipe to cross it and another step.
+    const reading = delta > 0 ? window.scrollY < range.end - 2 : window.scrollY > range.start + 2;
+    if (reading) {
+      accumulatedDelta = 0;
+      clearTension();
+      const destination = clamp(window.scrollY + delta, range.start, range.end);
+      instantScroll(destination);
+      // Reaching the reading edge consumes this gesture; the next swipe changes step.
+      if (Math.abs(destination - (delta > 0 ? range.end : range.start)) < 2) committedInGesture = true;
+      return;
+    }
+    const outward = (activeIndex === 0 && delta < 0) || (activeIndex === triggers.length - 1 && delta > 0);
+    if (outward) { instantScroll(window.scrollY + delta); return; }
+    accumulate(delta, touchThreshold);
+  };
+  const onTouchEnd = () => {
+    touchPoint = null;
+    touchMode = 'native';
+    if (mobileEnabled()) finishGesture();
   };
 
   const resetInteraction = () => {
@@ -336,9 +442,26 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   };
 
   const onNativeScroll = () => {
+    const previousY = lastObservedY;
     const moved = Math.abs(window.scrollY - lastObservedY) > 0.5;
     lastObservedY = window.scrollY;
     if (animationMode) return;
+    // Catch native entry/inertia from outside before it can skip the first/last step.
+    if (mobileEnabled() && nativeTouch && !reducedMotionQuery.matches && moved) {
+      const first = touchRange(0).start;
+      const last = touchRange(triggers.length - 1).end;
+      const enteringDown = previousY < first && window.scrollY >= first;
+      const enteringUp = previousY > last && window.scrollY <= last;
+      if (enteringDown || enteringUp) {
+        setActiveIndex(enteringDown ? 0 : triggers.length - 1);
+        wheelOwnsState = true;
+        committedInGesture = true;
+        nativeTouch = false;
+        touchMode = 'controlled';
+        springToActiveStage(0);
+        return;
+      }
+    }
     if (moved) {
       resetInteraction();
       scheduleFallback();
@@ -346,16 +469,20 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   };
 
   const onNativeNavigation = () => {
+    nativeTouch = false;
     resetInteraction();
     scheduleFallback();
   };
 
   const setupFallback = () => {
     if (destroyed) return;
+    const preserveMobileStep = mobileEnabled() && wheelOwnsState;
+    touchPoint = null;
+    nativeTouch = false;
     observer?.disconnect();
     resetInteraction();
 
-    if (!story || !desktopQuery.matches) {
+    if (!story || !enabled()) {
       cancelAnimation();
       clearTension();
       return;
@@ -370,13 +497,21 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     });
 
     triggers.forEach((trigger) => observer?.observe(trigger));
-    syncFromPosition();
+    if (preserveMobileStep && !reducedMotionQuery.matches) {
+      wheelOwnsState = true;
+      springToActiveStage(0);
+    } else syncFromPosition();
   };
 
   window.addEventListener('wheel', onWheel, { passive: false, signal: listeners.signal });
   window.addEventListener('scroll', onNativeScroll, { passive: true, signal: listeners.signal });
-  window.addEventListener('pointerdown', onNativeNavigation, { passive: true, signal: listeners.signal });
-  window.addEventListener('touchstart', onNativeNavigation, { passive: true, signal: listeners.signal });
+  window.addEventListener('pointerdown', (event) => {
+    if (!(event.pointerType === 'touch' && mobileEnabled())) onNativeNavigation();
+  }, { passive: true, signal: listeners.signal });
+  window.addEventListener('touchstart', onTouchStart, { passive: true, signal: listeners.signal });
+  window.addEventListener('touchmove', onTouchMove, { passive: false, signal: listeners.signal });
+  window.addEventListener('touchend', onTouchEnd, { passive: true, signal: listeners.signal });
+  window.addEventListener('touchcancel', () => { onTouchEnd(); nativeTouch = false; resetInteraction(); }, { passive: true, signal: listeners.signal });
   window.addEventListener('keydown', (event) => {
     if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
       onNativeNavigation();

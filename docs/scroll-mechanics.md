@@ -3,7 +3,8 @@
 Снимок реализации: 28 сентября 2026. Маршрут: /projects/doverie/.
 Этот документ описывает **существующее поведение**, а не идеальный scroll API.
 После обновления дизайна изменены разметка, стили и медиа страницы.
-Алгоритм src/lib/steppedScroll.ts и все параметры жеста/анимации сохранены.
+Desktop-алгоритм и параметры жеста/анимации сохранены. Touch — opt-in адаптер
+того же src/lib/steppedScroll.ts, с общими индексом, accumulate, commitStep и spring.
 Это не CSS scroll-snap: колесо переключает дискретное состояние, а окно
 доводится до позиции шага через requestAnimationFrame.
 
@@ -27,7 +28,7 @@
 синхронная копия для отрисовки, обновляемая onStep. Не меняйте её отдельно.
 Количество шагов определяется triggers.length, отдельного параметра count нет.
 
-## Scroll algorithm
+## Scroll algorithm — desktop wheel
 
 1. На window установлен wheel с passive:false. На мобильном (до 900px
    включительно), при reduced motion, Ctrl+wheel, преимущественно горизонтальном
@@ -63,6 +64,50 @@
     сбрасывают interaction. Клавиши: ArrowUp/Down, PageUp/Down, Home, End, Space.
     resize и изменения media query также сбрасывают состояние и пересчитывают
     геометрию. После document.fonts.ready измерения повторяются.
+
+### Mobile / touch (opt-in)
+
+Параметр `touch` включает адаптер ниже desktopQuery; без него прежняя линейная
+mobile-версия остаётся native. Wheel на узком экране по-прежнему native.
+На Doverie переданы `threshold:80`, `axisThreshold:8`, `scrollRange(index)`.
+
+- touchstart запоминает координаты одного пальца. Touch pointerdown не сбрасывает
+  накопленное натяжение; остальные pointerdown сохраняют прежнее поведение.
+- После движения на 8px определяется вертикальная/горизонтальная ось.
+  Горизонтальный жест, multitouch, reduced motion и интерактивные элементы
+  (`a,button,input,textarea,select,[contenteditable=true],[data-scroll-native]`)
+  остаются браузеру. На контролируемом вертикальном touchmove вызывается
+  preventDefault, listener обязательно passive:false. Тапы не отменяются.
+- Delta = previousClientY−currentClientY, в CSS px; скорость и абсолютный
+  scrollY не добавляются к порогу. Signed delta проходит через ту же accumulate,
+  что wheel: обратный ввод сначала снимает натяжение, затем начинает обратный шаг.
+- Один touchstart→touchend — один gesture, без wheel idle-таймера. После commit
+  весь остаток этого жеста блокируется. Быстрый свайп тоже меняет максимум один
+  индекс. Новый жест во время spring может набрать порог нового шага, как desktop.
+- touchend снимает lock, но сохраняет недобранную сумму, как медленные wheel ticks.
+  touchcancel/multitouch сбрасывают взаимодействие. Нет body scroll lock.
+- Страница задаёт диапазон чтения `[start,end]` каждого блока. Пока длинный блок
+  не дочитан, палец двигает окно 1:1 внутри диапазона, не меняя activeIndex.
+  Достижение границы чтения завершает этот gesture без смены шага; новый свайп
+  набирает порог. Это необходимо: видео673px + текст не помещаются в экран телефона.
+- В начале первого шага вверх и в конце последнего вниз новый жест получает
+  native scroll, включая инерцию. Вход из hero/CTA фиксирует первый/последний шаг,
+  а не сразу переключает следующий. onNativeScroll также ловит пересечение
+  границы инерцией внешнего native-жеста и доводит к anchor общей spring-анимацией,
+  чтобы остаточная инерция не проскочила весь кейс.
+- onStep синхронно меняет `.is-active`, desktop `data-active` и mobile
+  `[data-stage-image].dataset.active`. Видео играет только у видимого активного
+  шага. Tension одинаково смещает текст и mobile media, но НЕ marker/article.
+- При resize/orientation контролируемого mobile-шага индекс сохраняется,
+  геометрия пересчитывается и spring доводит до нового anchor. Desktop resize
+  сохраняет прежний reset+fallback. Вне контролируемого шага используется fallback.
+
+Mobile restPosition: для первых трёх шагов весь article (media+text) центрируется,
+если помещается; минимум top24px. Для shared-account и nearby top всегда24px.
+Передаваемый restPosition включает trigger.offsetTop, как desktop.
+scrollRange.start = documentTop(article)−top;
+scrollRange.end = max(start,documentBottom(article)−innerHeight+24).
+Отступ между article остаётся121px, gap media→text36px. Размеры медиа не изменены.
 
 ### Spring / позиционирование
 
@@ -116,6 +161,10 @@ Native навигация может перескочить несколько �
 | springDamping=26 | Торможение. Больше обычно замедляет доведение; меньше повышает скорость; overshoot всё равно обрезан |
 | springTimeScale=1.5 | Скорость интегрирования. Больше — быстрее, меньше — медленнее; dt ограничен |
 | desktopQuery='(min-width: 901px)' | Где доступен stepped wheel. Повышение breakpoint расширяет линейную мобильную область; согласуйте CSS |
+| touch (по умолчанию отсутствует) | Opt-in stepped touch ниже desktopQuery; на Doverie включён |
+| touch.threshold=80 | Порог движения пальца в CSS px; больше — более длинный свайп |
+| touch.axisThreshold=8 | Минимум движения для определения оси; больше — позже захват |
+| touch.scrollRange(index) | Диапазон чтения длинного шага; без callback только anchor |
 | initialIndex=0 | Стартовый индекс (целый, ограничен диапазоном). Fallback при setup может сразу заменить его по позиции окна |
 | triggers.length=5 на странице | about, problem, solution, shared-account, nearby; изменение массива меняет границы |
 | sensitivity | Отдельного API нет: исходный коэффициент 1; регулировать threshold / maxEventDelta |
@@ -155,7 +204,7 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 | --case-ease-out:cubic-bezier(0.22,1,0.36,1) | Текущее замедление CSS. У кривой нет простого «больше/меньше» |
 | Неактивная картинка translateY(13px) scale(0.985) | Это фактическая текущая версия; не заменять молча на ранние требования |
 | delayed marker top:30px | Со второго шага; restPosition добавляет тот же offset, поэтому он сокращается в расчёте цели, НЕ отдельная задержка на 30px |
-| mobile breakpoint <=900px | Нет sticky/wheel, медиа перед текстом; gap121px |
+| mobile breakpoint <=900px | Нет sticky/wheel; stepped touch, медиа перед текстом; gap121px |
 | visual width по колонке; height=min(673px,100svh-32px), от1680px — min(675px,100svh-32px) | Стабильная высота между шагами; важна для расчёта центра |
 | problem image | Новая схема doverie-flow.png, natural aspect ratio; старый crop больше не нужен |
 
@@ -175,6 +224,7 @@ const controller = createSteppedScroll({
   triggers,
   restLine: REST_LINE,
   restPosition,
+  touch: { threshold: 80, axisThreshold: 8, scrollRange }, // page-specific reading range
   onStep: setActiveIndex,
   onTension: renderTension,
   onClearTension: clearTension,
@@ -346,7 +396,8 @@ const steps = [
    по одному на шаг, в том же порядке, что текст/изображения.
 3. Проверить, что createSteppedScroll вызван ровно один раз в клиентском script,
    wheel listener passive:false; не загружена старая вторая копия обработчика.
-4. Проверить breakpoint и prefers-reduced-motion: отсутствие snap там штатно.
+4. Проверить breakpoint, opt-in touch и prefers-reduced-motion: reduced motion
+   и mobile без touch-конфигурации используют native scroll.
 5. Проверить threshold=120, cap=60. Один большой wheel-импульс намеренно
    не переключает шаг; нужны минимум два capped импульса.
 6. Посмотреть controller.getState(): index в диапазоне, delta signed,
@@ -383,7 +434,8 @@ const steps = [
 - Старый crop прозрачного края problem удалён вместе с заменой изображения на схему.
 - Текущая версия использует spring, scale изображения и 13px translate,
   несмотря на раннюю идею «без spring/zoom». Рефакторинг не меняет UX.
-- Клавиатура/scrollbar/touch — native fallback, не stepped жест.
+- Клавиатура/scrollbar — native fallback, не stepped жест. Touch native только
+  без opt-in, вне секции, на внешней границе, при reduced motion/исключениях.
 - Resize сбрасывает tension и пересинхронизирует, но не принуждает
   центрирование текущего шага новой анимацией: так было до извлечения.
 - Вложенные scrollable области, исключения для inputs и несколько контроллеров
@@ -407,12 +459,20 @@ const steps = [
 npx astro dev --background --port 4322
 npm run build
 node scripts/check-stepped-scroll.mjs
+node scripts/check-stepped-touch.mjs
 ~~~
 
 Проверочный скрипт использует Playwright. Можно установить его в отдельное
 тестовое окружение; PLAYWRIGHT_MODULE — путь к установленному пакету,
 CHROME_PATH — путь к Chrome; без них используются playwright и его Chromium.
 SCROLL_URL переопределяет URL. Установка тестового инструмента не нужна сайту.
+
+Touch-проверка использует Chromium CDP Input.dispatchTouchEvent с isMobile/hasTouch,
+а не dispatchEvent: проверяет native scroll/inertia и отменяемость touchmove.
+Покрывает пять шагов в обе стороны, короткие/быстрые/последовательные свайпы,
+чтение высоких блоков, границы hero/CTA, touchcancel, orientation, active media,
+horizontal overflow, reduced motion и console errors. Физический iOS/Safari
+этот тест не заменяет; перед публикацией проверить свайпы и browser chrome там.
 
 Исторический baseline до обновления дизайна (трёхшаговая версия), Chrome 1440×900:
 | Состояние | active | scrollY | центр текста | центр изображения |
@@ -426,7 +486,7 @@ SCROLL_URL переопределяет URL. Установка тестовог
 
 Эти координаты относятся к старому дизайну и больше не являются ожиданиями
 теста. Текущая проверка проходит пять шагов и проверяет центрирование,
-а не абсолютное scrollY; core не менялся.
+  а не абсолютное scrollY; desktop-параметры не менялись.
 Дополнительно скрипт проверяет быстрый жест с первого шага (не пропускает
 problem), дрожание знака, лёгкий reverse в середине анимации, выход через обе
 границы, resize, ширины800/390, reduced motion и runtime errors.
@@ -452,11 +512,14 @@ scrollBehavior восстановлен; повторные destroy и нова�
   armGestureEnd, beginGesture, commitStep, onWheel, resetInteraction,
   onNativeScroll, onNativeNavigation, setupFallback.
 - return: getState, refresh, destroy.
+- touch state: touchPoint, touchMode (pending/controlled/native), nativeTouch.
+- touch functions: mobileEnabled, enabled, touchRange, instantScroll,
+  onTouchStart/Move/End. accumulate общая с wheel; отдельного activeIndex нет.
 - constants mapped from options: DESKTOP_QUERY, STEP_THRESHOLD, MAX_EVENT_DELTA,
   GESTURE_IDLE_MS, REST_LINE, SPRING_STIFFNESS, SPRING_DAMPING, SPRING_TIME_SCALE.
   Точные значения и media query — в таблицах выше.
 - setup: при create, fonts.ready, resize, desktop/reduced query change;
-  window listeners: wheel, scroll, pointerdown, touchstart, keydown, resize.
+  window listeners: wheel, scroll, pointerdown, touchstart/move/end/cancel, keydown, resize.
 
 **Page:** src/pages/projects/doverie.astro
 - data: stages = about / problem / solution / shared-account / nearby, три map-представления через
@@ -479,6 +542,8 @@ scrollBehavior восстановлен; повторные destroy и нова�
 - attributes: data-case-story; data-case-stage=id; data-case-trigger;
   data-case-visual=id; data-active=true/false; data-centered=true/false;
   data-stage-image=id.
+  Mobile visual также имеет data-active=true/false; не получает inert/aria-hidden,
+  потому что линейный контент остаётся доступным для чтения и native navigation.
 - dynamic CSS vars: --case-active-translate-y, --case-active-scale,
   --case-active-opacity, --case-preview-progress,
   --case-last-visual-space, --case-stage-extra-gap.

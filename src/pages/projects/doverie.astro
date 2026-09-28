@@ -136,7 +136,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
               </div>
             </div>
 
-            <div class="case-stage__mobile-visual" data-stage-image={stage.id}>
+            <div class="case-stage__mobile-visual" data-stage-image={stage.id} data-active={index === 0 ? 'true' : 'false'}>
               {stage.image ? (
                 <Image src={stage.image} alt={stage.alt} quality={90} loading="lazy" />
               ) : (
@@ -200,9 +200,10 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
   const videos = [...document.querySelectorAll<HTMLVideoElement>('[data-case-video]')];
   const visibleVideos = new Set<HTMLVideoElement>();
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const mobile = window.matchMedia('(max-width: 900px)');
   function syncVideos() {
     videos.forEach((video) => {
-      const active = video.closest<HTMLElement>('[data-case-visual]')?.dataset.active !== 'false';
+      const active = video.closest<HTMLElement>('[data-case-visual], [data-stage-image]')?.dataset.active !== 'false';
       if (visibleVideos.has(video) && active && !reducedMotion.matches && !document.hidden) {
         void video.play().catch(() => { /* Native controls remain available if autoplay is blocked. */ });
       } else {
@@ -264,6 +265,8 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
 
       stageElements.forEach((stage, index) => {
         stage.classList.toggle('is-active', index === activeIndex);
+        const media = stage.querySelector<HTMLElement>('[data-stage-image]');
+        if (media) media.dataset.active = String(index === activeIndex);
         stage.classList.remove('is-preview');
         stage.style.removeProperty('--case-preview-progress');
       });
@@ -317,6 +320,11 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     };
 
     const restPosition = (index: number) => {
+      if (mobile.matches) {
+        // Tall video steps start at the top; smaller text/media pairs center together.
+        const top = index >= 3 ? 24 : Math.max(24, (window.innerHeight - stageElements[index].offsetHeight) / 2);
+        return top + triggers[index].offsetTop;
+      }
       if (index === 0) return window.innerHeight * REST_LINE;
       const content = stageElements[index]?.querySelector<HTMLElement>('.case-stage__content');
       const triggerOffset = triggers[index]?.offsetTop ?? 0;
@@ -329,6 +337,15 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
       triggers,
       restLine: REST_LINE,
       restPosition,
+      touch: {
+        threshold: 80,
+        axisThreshold: 8,
+        scrollRange: (index) => {
+          const stage = stageElements[index].getBoundingClientRect();
+          const start = window.scrollY + stage.top + triggers[index].offsetTop - restPosition(index);
+          return { start, end: Math.max(start, window.scrollY + stage.bottom - window.innerHeight + 24) };
+        },
+      },
       onStep: setActiveIndex,
       onTension: renderTension,
       onClearTension: clearTension,
@@ -526,6 +543,10 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     }
     .case-stage__content, .case-stage.is-active .case-stage__content {
       opacity: 1; transform: none; transition: none;
+    }
+    .case-stage.is-active .case-stage__content,
+    .case-stage.is-active .case-stage__mobile-visual {
+      transform: translateY(var(--case-active-translate-y, 0px));
     }
     .case-stage__mobile-visual { display: block; order: -1; width: 100%; overflow: hidden; border-radius: 30px; }
     .case-stage__mobile-visual :global(img) { width: 100%; height: auto; }

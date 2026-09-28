@@ -133,7 +133,7 @@ try {
   assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '72px');
   for (const width of [800, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    await pause(200);
+    await pause(1200); // Mobile now restores its active anchor after resize.
     assert.equal(await page.locator('.case-story__visual').evaluate(
       (el) => getComputedStyle(el).display), 'none');
     const y = await page.evaluate(() => scrollY);
