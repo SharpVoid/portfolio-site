@@ -30,6 +30,7 @@ const { resumeHref } = Astro.props;
 <style>
   .profile { position: sticky; top: 50px; align-self: start; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .profile__portrait { width: 420px; max-width: 100%; aspect-ratio: 420 / 385; position: relative; }
+  .profile__portrait :global(picture) { position: absolute; inset: 0; display: block; }
   .profile__portrait :global(img) { width: 100%; height: 100%; object-fit: cover; }
   .profile__portrait::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 74.026%, white 97.662%); pointer-events: none; }
   .profile__body { min-width: 0; }
