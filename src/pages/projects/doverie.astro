@@ -99,7 +99,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
         <p>Идея создания социального слоя для банковского приложения, в которой объединяются финансовые операции и взаимодействие между знакомыми людьми.</p>
       </div>
       <div class="case-tags" data-tags>
-        {tags.map((tag, index) => <span class:list={['case-tag', { 'case-tag--extra': index > 1 }]}>{tag}</span>)}
+        {tags.map((tag, index) => <span class:list={['case-tag', { 'case-tag--extra': index > 1 }]} style={`--tag-delay: ${Math.max(0, index - 2) * 50}ms`}>{tag}</span>)}
         <button class="case-tag case-tags__toggle" type="button" aria-expanded="false" aria-label="Показать ещё четыре направления">+4</button>
       </div>
     </header>
@@ -235,7 +235,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     const expanded = toggle.getAttribute('aria-expanded') !== 'true';
     toggle.setAttribute('aria-expanded', String(expanded));
     toggle.setAttribute('aria-label', expanded ? 'Скрыть дополнительные направления' : 'Показать ещё четыре направления');
-    toggle.textContent = expanded ? '−4' : '+4';
+    toggle.textContent = expanded ? 'скрыть' : '+4';
     tags?.classList.toggle('is-expanded', expanded);
   });
 
@@ -563,8 +563,15 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     .case-hero h1 { font-size: 24px; line-height: 31px; }
     .case-hero p { font-size: 14px; line-height: 18px; }
     .case-tag--extra { display: none; }
-    .case-tags.is-expanded .case-tag--extra { display: inline; }
+    .case-tags.is-expanded .case-tag--extra {
+      display: inline;
+      animation: case-tag-reveal 240ms var(--case-ease-out) var(--tag-delay) both;
+    }
     .case-tags__toggle { display: inline; }
+    .case-tags__toggle[aria-expanded='true'] {
+      background: none; color: var(--color-accent); border-radius: 0;
+      padding-inline: 0; font: inherit;
+    }
     .case-stage h2 { margin-bottom: 12px; font-size: 20px; line-height: 26px; }
     .case-stage__body { gap: 18px; font-size: 14px; line-height: 18px; }
     .case-stage__mobile-visual { border-radius: 20px; }
@@ -577,7 +584,12 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     .case-contact__pitch { gap: 18px; }
     .case-contact__button { margin-top: 22px; }
   }
+  @keyframes case-tag-reveal {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   @media (prefers-reduced-motion: reduce) {
+    .case-tags.is-expanded .case-tag--extra { animation: none; }
     .case-story__visual, .case-stage__content { transition: none; }
     .case-story__image { transform: none; transition: opacity 1ms linear; }
   }

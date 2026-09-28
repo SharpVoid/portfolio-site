@@ -53,6 +53,21 @@ async function anchor(index, offset = 0) {
 try {
   await page.goto(process.env.SCROLL_URL || 'http://localhost:4322/projects/doverie/');
   await page.evaluate(() => document.fonts.ready);
+  const tagsToggle = page.locator('.case-tags__toggle');
+  assert.equal(await tagsToggle.textContent(), '+4');
+  assert.equal(await page.locator('.case-tags span:visible').count(), 2);
+  await tagsToggle.tap();
+  assert.equal(await tagsToggle.textContent(), 'скрыть');
+  assert.equal(await page.locator('.case-tags span:visible').count(), 6);
+  const tagStyles = await page.locator('.case-tag--extra').evaluateAll(elements =>
+    elements.map(el => getComputedStyle(el).animationDelay));
+  assert.deepEqual(tagStyles, ['0s', '0.05s', '0.1s', '0.15s']);
+  assert.equal(await tagsToggle.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)');
+  assert.equal(await tagsToggle.evaluate(el => getComputedStyle(el).color),
+    await page.locator('.case-nav a').first().evaluate(el => getComputedStyle(el).color));
+  await tagsToggle.tap();
+  assert.equal(await tagsToggle.textContent(), '+4');
+  assert.equal(await page.locator('.case-tags span:visible').count(), 2);
   await anchor(0);
   const before = await expect('about');
   await swipe(20, 2);
