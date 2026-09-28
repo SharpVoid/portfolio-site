@@ -2,7 +2,8 @@
 
 Снимок реализации: 28 сентября 2026. Маршрут: /projects/doverie/.
 Этот документ описывает **существующее поведение**, а не идеальный scroll API.
-Рефакторинг сохранил алгоритм, разметку, CSS и значения параметров.
+После обновления дизайна изменены разметка, стили и медиа страницы.
+Алгоритм src/lib/steppedScroll.ts и все параметры жеста/анимации сохранены.
 Это не CSS scroll-snap: колесо переключает дискретное состояние, а окно
 доводится до позиции шага через requestAnimationFrame.
 
@@ -15,7 +16,7 @@
 | Styles | doverie.astro, scoped style | Sticky, текст, изображения, адаптив, переходы и reduced motion |
 | Animation logic | runSpring в core + CSS страницы | Core двигает window.scrollY; страница рисует tension и переходы |
 | Проверка | scripts/check-stepped-scroll.mjs | Браузерные регрессионные проверки |
-| Данные / ресурсы | stages и src/assets/projects/doverie-{hero,about,problem,result}.png | Контент; не нужны reusable core |
+| Данные / ресурсы | stages и src/assets/projects/doverie-{hero,flow,architecture}.png и public/videos/doverie/ | Контент; не нужны reusable core |
 | Окружение | src/layouts/BaseLayout.astro, src/styles/{global,tokens,fonts}.css | Оболочка, шрифты; core от них не зависит |
 
 Модуль не импортирует Astro, библиотеки анимации или CSS. В нём нет case-селекторов.
@@ -116,7 +117,7 @@ Native навигация может перескочить несколько �
 | springTimeScale=1.5 | Скорость интегрирования. Больше — быстрее, меньше — медленнее; dt ограничен |
 | desktopQuery='(min-width: 901px)' | Где доступен stepped wheel. Повышение breakpoint расширяет линейную мобильную область; согласуйте CSS |
 | initialIndex=0 | Стартовый индекс (целый, ограничен диапазоном). Fallback при setup может сразу заменить его по позиции окна |
-| triggers.length=3 на странице | about, problem, result; изменение массива меняет границы |
+| triggers.length=5 на странице | about, problem, solution, shared-account, nearby; изменение массива меняет границы |
 | sensitivity | Отдельного API нет: исходный коэффициент 1; регулировать threshold / maxEventDelta |
 | duration / easing / cooldown | Не выдуманы: spring-параметры + gestureIdleMs, CSS отдельно |
 
@@ -142,9 +143,9 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 | preview translate=activeTranslate×0.6 | Больше коэффициент — больше движение соседнего текста |
 | is-tensioning при progress>0.001 | Порог отключения CSS transitions для непосредственного отклика |
 | --case-sticky-offset:72px | Верх изображения на первом шаге. Больше — ниже |
-| --case-centered-offset | max(16,(H-visualHeight)/2), пересчитывается при setup/resize/fonts |
+| --case-centered-offset | CSS max(16px,(100vh - --case-visual-height)/2); центр не зависит от сохранённого JS-замера |
 | --case-stage-spacing:150px | Расстояние между layout-блоками. Больше — длиннее переход |
-| --case-problem-extra-gap | about.offsetHeight×(1-0.6667); компенсирует видимую разницу расстояний после scale |
+| --case-stage-extra-gap | updateStageSpacing(): extra=about.offsetHeight×(1-0.6667); после активного шага >0 ставится extra, перед ним — extra−previousHeight×(1-0.6667). Видимые отступы с обеих сторон равны 150px+extra, как у «Проблемы». Пересчёт при смене шага и onMeasure; mobile не применяет margin |
 | --case-last-visual-space | (visualHeight+lastContent.offsetHeight)/2; резерв в конце sticky-контейнера |
 | last-child min-height | max(50vh,62vh-80px,last-visual-space); меньше резерв — риск упереться в конец sticky |
 | --case-inactive-opacity:0.28; scale:0.6667 | Больше — неактивный текст заметнее/крупнее |
@@ -154,9 +155,9 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 | --case-ease-out:cubic-bezier(0.22,1,0.36,1) | Текущее замедление CSS. У кривой нет простого «больше/меньше» |
 | Неактивная картинка translateY(13px) scale(0.985) | Это фактическая текущая версия; не заменять молча на ранние требования |
 | delayed marker top:30px | Со второго шага; restPosition добавляет тот же offset, поэтому он сокращается в расчёте цели, НЕ отдельная задержка на 30px |
-| mobile breakpoint <=900px | Нет sticky/wheel, картинки рядом с текстом; gap72px, до600px gap64px |
-| visual width<=577px, aspect-ratio:1 | Стабильная высота; важна для расчёта центра |
-| problem image height=100%×586/577 | Обрезает 9 прозрачных строк экспорта, не связана со scroll |
+| mobile breakpoint <=900px | Нет sticky/wheel, медиа перед текстом; gap121px |
+| visual width по колонке; height=min(673px,100svh-32px), от1680px — min(675px,100svh-32px) | Стабильная высота между шагами; важна для расчёта центра |
+| problem image | Новая схема doverie-flow.png, natural aspect ratio; старый crop больше не нужен |
 
 ## Page integration
 
@@ -213,7 +214,7 @@ ClientRouter; для проекта с ClientRouter нужна также пов
 
 ## Adding a new section
 
-1. Добавьте объект с уникальным id, title, paragraphs, image, alt в stages.
+1. Добавьте объект с уникальным id, title, paragraphs, alt и image либо video+poster в stages.
 2. Оба map в существующей разметке автоматически добавят текст, маркер,
    мобильную картинку и desktop visual в одинаковом порядке.
 3. Не переносите маркер внутрь масштабируемого .case-stage__content.
@@ -229,12 +230,12 @@ ClientRouter; для проекта с ClientRouter нужна также пов
 
 1. Удалите объект из stages, а не только текст или только изображение.
 2. Удалите неиспользуемый импорт ресурса, если он больше нигде не нужен.
-3. Если удаляете problem, проверьте относящиеся к нему CSS gap/crop правила;
+3. Если удаляете problem, проверьте относящиеся к нему CSS gap правила;
    они не ломают core, но становятся лишними.
 4. Пересоздайте controller при динамическом удалении; начальный индекс должен
    соответствовать новой разметке. Для нуля секций не инициализируйте core.
 5. Проверьте первую и последнюю границу и mobile.
-   Тест кейса содержит названия трёх текущих шагов: обновите ожидания осознанно.
+   Тест кейса содержит названия пяти текущих шагов: обновите ожидания осознанно.
 
 ## Reusing on another page
 
@@ -248,8 +249,8 @@ wheel listeners не поддержаны этим минимальным изв
 
 Перенесите src/lib/steppedScroll.ts и этот документ.
 Минимальный пример не требует BaseLayout, шрифтов, изображений или UI-framework.
-Для полной копии «Доверия» дополнительно нужны сама страница, её четыре PNG,
-BaseLayout и импортируемые им стили/шрифты. Сохраните scoped CSS страницы.
+Для полной копии «Доверия» дополнительно нужны сама страница, её три PNG, папка public/videos/doverie/ с MP4 и постерами,
+Footer, BaseLayout и импортируемые им стили/шрифты. Сохраните scoped CSS страницы.
 
 Runtime зависимости: стандартные DOM API (IntersectionObserver, matchMedia,
 requestAnimationFrame, AbortController, document.fonts). npm зависимости
@@ -379,7 +380,7 @@ const steps = [
   другую геометрию. Sticky top меняется CSS-переходом 440ms, не скачком.
 - «30px задержка» исторического marker компенсируется restPosition.
   Документируем фактическую формулу, не обещаем дополнительную задержку.
-- Нижний прозрачный край problem исправляется crop экспорта, не margin.
+- Старый crop прозрачного края problem удалён вместе с заменой изображения на схему.
 - Текущая версия использует spring, scale изображения и 13px translate,
   несмотря на раннюю идею «без spring/zoom». Рефакторинг не меняет UX.
 - Клавиатура/scrollbar/touch — native fallback, не stepped жест.
@@ -388,8 +389,8 @@ const steps = [
 - Вложенные scrollable области, исключения для inputs и несколько контроллеров
   не реализованы. Глобальный wheel может перехватить ввод вложенного виджета.
 - Не обещается отсутствие пропусков при нативном Home/End или scrollbar.
-- Очень короткое окно / очень длинный текст: высота изображения может быть
-  больше viewport; max(16,...) ограничивает верх, но не масштабирует картинку.
+- Desktop-медиа ограничены высотой viewport минус32px; длинный текст всё ещё
+  требует проверки на коротком экране.
 - Динамические вставки и смена шрифтов после fonts.ready требуют refresh.
 - fonts.ready повторно вызывает setup и сбрасывает interaction. Ввод ровно
   во время первой загрузки шрифтов может потерять недобранное tension;
@@ -413,7 +414,7 @@ node scripts/check-stepped-scroll.mjs
 CHROME_PATH — путь к Chrome; без них используются playwright и его Chromium.
 SCROLL_URL переопределяет URL. Установка тестового инструмента не нужна сайту.
 
-До и после извлечения один и тот же сценарий Chrome, 1440×900 дал:
+Исторический baseline до обновления дизайна (трёхшаговая версия), Chrome 1440×900:
 | Состояние | active | scrollY | центр текста | центр изображения |
 | --- | --- | --- | --- | --- |
 | Вход | about | 549 | 449 | 584 |
@@ -423,7 +424,9 @@ SCROLL_URL переопределяет URL. Установка тестовог
 | Обратно | problem | 1000 | 450 | 450 |
 | Обратно | about | 507 | 491 | 626 |
 
-Координаты — baseline для текущих шрифтов/контента/размера, не константы core.
+Эти координаты относятся к старому дизайну и больше не являются ожиданиями
+теста. Текущая проверка проходит пять шагов и проверяет центрирование,
+а не абсолютное scrollY; core не менялся.
 Дополнительно скрипт проверяет быстрый жест с первого шага (не пропускает
 problem), дрожание знака, лёгкий reverse в середине анимации, выход через обе
 границы, resize, ширины800/390, reduced motion и runtime errors.
@@ -456,10 +459,15 @@ scrollBehavior восстановлен; повторные destroy и нова�
   window listeners: wheel, scroll, pointerdown, touchstart, keydown, resize.
 
 **Page:** src/pages/projects/doverie.astro
-- data: stages = about / problem / result, три map-представления через
+- data: stages = about / problem / solution / shared-account / nearby, три map-представления через
   текст+mobile visual в первом map и desktop visuals во втором.
 - client functions: clamp, setActiveIndex, clearPreview, renderTension,
-  clearTension, restPosition; inline onMeasure.
+  clearTension, restPosition, syncVideos; inline onMeasure.
+- media: [data-case-video], videoObserver, visibleVideos; играет только видимое
+  активное видео, inactive paused; reduced motion/hidden document отключают autoplay.
+  Native controls позволяют ручной просмотр. poster — статичный кадр MP4.
+- .case-story__image теперь wrapper с img/video; inactive wrappers inert и aria-hidden.
+- [data-tags] / .case-tags__toggle раскрывает четыре дополнительных тега на mobile.
 - initialization: клиентский script после BaseLayout; createSteppedScroll
   внутри проверки story/triggers; cleanup на astro:before-swap.
 - selectors: [data-case-story], [data-case-stage], [data-case-trigger],
@@ -472,9 +480,10 @@ scrollBehavior восстановлен; повторные destroy и нова�
   data-case-visual=id; data-active=true/false; data-centered=true/false;
   data-stage-image=id.
 - dynamic CSS vars: --case-active-translate-y, --case-active-scale,
-  --case-active-opacity, --case-preview-progress, --case-centered-offset,
-  --case-last-visual-space, --case-problem-extra-gap.
+  --case-active-opacity, --case-preview-progress,
+  --case-last-visual-space, --case-stage-extra-gap.
 - static CSS vars: --case-sticky-offset, --case-stage-spacing,
+  --case-visual-height, --case-centered-offset,
   --case-inactive-opacity, --case-transition-duration,
   --case-image-fade-duration, --case-image-motion-duration, --case-ease-out.
 

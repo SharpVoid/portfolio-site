@@ -28,11 +28,21 @@ async function state() {
     const active = document.querySelector('.case-stage.is-active');
     const text = active.querySelector('.case-stage__content').getBoundingClientRect();
     const image = document.querySelector('.case-story__visual').getBoundingClientRect();
+    const media = document.querySelector('[data-case-visual][data-active="true"] :is(img, video)').getBoundingClientRect();
+    const sections = [...document.querySelectorAll('.case-stage__content')];
+    const index = sections.indexOf(active.querySelector('.case-stage__content'));
+    const before = sections[index - 1]?.getBoundingClientRect();
+    const after = sections[index + 1]?.getBoundingClientRect();
     return {
       stage: active.dataset.caseStage,
       y: scrollY,
       center: Math.round(text.top + text.height / 2),
       visual: Math.round(image.top + image.height / 2),
+      mediaCenter: media.top + media.height / 2,
+      viewportCenter: innerHeight / 2,
+      gapBefore: before ? text.top - before.bottom : null,
+      gapAfter: after ? after.top - text.bottom : null,
+      expectedGap: 150 + sections[0].offsetHeight * (1 - 0.6667),
       count: document.querySelectorAll('.case-stage.is-active').length,
     };
   });
@@ -42,8 +52,11 @@ async function expect(stage, centered = false) {
   assert.equal(value.stage, stage);
   assert.equal(value.count, 1);
   if (centered) {
-    assert.ok(Math.abs(value.center - 450) <= 2, JSON.stringify(value));
-    assert.ok(Math.abs(value.visual - 450) <= 2, JSON.stringify(value));
+    assert.ok(Math.abs(value.center - value.viewportCenter) <= 2, JSON.stringify(value));
+    assert.ok(Math.abs(value.visual - value.viewportCenter) <= 2, JSON.stringify(value));
+    assert.ok(Math.abs(value.mediaCenter - value.viewportCenter) <= 2, JSON.stringify(value));
+    assert.ok(Math.abs(value.gapBefore - value.expectedGap) <= 2, JSON.stringify(value));
+    if (value.gapAfter !== null) assert.ok(Math.abs(value.gapAfter - value.expectedGap) <= 2, JSON.stringify(value));
   }
   return value;
 }
@@ -72,11 +85,17 @@ try {
     await pause(15);
   }
   await pause(1100);
-  await expect('result', true);
+  await expect('solution', true);
+  await step(1); await expect('shared-account', true);
+  assert.equal(await page.locator('[data-case-visual="shared-account"] video').evaluate(v => v.paused), false);
+  await step(1); await expect('nearby', true);
   const lastY = (await state()).y;
   await page.mouse.wheel(0, 80);
   await pause(300);
   assert.ok((await state()).y > lastY, 'last boundary must release native scrolling');
+  await step(-1);
+  await expect('shared-account', true);
+  await step(-1); await expect('solution', true);
   await step(-1);
   await expect('problem', true);
   await step(-1);
@@ -100,13 +119,18 @@ try {
   await page.mouse.wheel(0, 60); await pause(30);
   await page.mouse.wheel(0, 60); await pause(170);
   await page.mouse.wheel(0, -8); await pause(1100);
-  assert.ok(Math.abs((await state()).y - 1000) <= 1);
   await expect('problem', true);
 
   await page.setViewportSize({ width: 1200, height: 800 });
   await pause(300);
   await step(-1); await expect('about');
-  await step(1); await expect('problem');
+  await step(1); await expect('problem', true);
+  await page.setViewportSize({ width: 1920, height: 700 });
+  await pause(300);
+  await step(-1); await expect('about');
+  await step(1); await expect('problem', true);
+  assert.equal(await page.locator('.case-contact').evaluate(el => getComputedStyle(el).marginTop), '226.5px');
+  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '72px');
   for (const width of [800, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await pause(200);
@@ -115,6 +139,7 @@ try {
     const y = await page.evaluate(() => scrollY);
     await page.mouse.wheel(0, 50); await pause(250);
     assert.ok(await page.evaluate((old) => scrollY > old, y));
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal overflow');
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -122,6 +147,18 @@ try {
   const y = (await state()).y;
   await page.mouse.wheel(0, 20); await pause(250);
   assert.ok((await state()).y > y, 'reduced motion uses native scrolling');
+  assert.ok(await page.locator('video').evaluateAll(videos => videos.every(v => v.paused)), 'reduced motion disables autoplay');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(url);
+  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '150px');
+  await page.locator('.case-tags__toggle').click();
+  assert.equal(await page.locator('.case-tags__toggle').getAttribute('aria-expanded'), 'true');
+  for (const section of await page.locator('[data-case-stage]').all()) {
+    await section.scrollIntoViewIfNeeded();
+    await pause(200);
+    const image = section.locator('.case-stage__mobile-visual img');
+    if (await image.count()) await image.evaluate(img => img.decode());
+  }
   assert.deepEqual(errors, []);
   console.log('PASS: slow/fast, all steps, both boundaries, jitter, interrupted input, resize, mobile/tablet, reduced motion.');
 } finally {

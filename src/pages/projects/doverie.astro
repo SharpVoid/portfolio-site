@@ -3,14 +3,16 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import doverieHero from '../../assets/projects/doverie-hero.png';
-import doverieAbout from '../../assets/projects/doverie-about.png';
-import doverieProblem from '../../assets/projects/doverie-problem.png';
-import doverieResult from '../../assets/projects/doverie-result.png';
+import Footer from '../../components/Footer.astro';
+import doverieFlow from '../../assets/projects/doverie-flow.png';
+import doverieArchitecture from '../../assets/projects/doverie-architecture.png';
 
 interface Stage {
   id: string;
   title: string;
-  image: ImageMetadata;
+  image?: ImageMetadata;
+  video?: string;
+  poster?: string;
   alt: string;
   paragraphs: string[];
   meta?: { term: string; value: string }[];
@@ -18,13 +20,11 @@ interface Stage {
 
 const stages: Stage[] = [
   {
-    id: 'about',
-    title: 'О проекте',
-    image: doverieAbout,
+    id: 'about', title: 'О проекте',
+    video: '/videos/doverie/about.mp4',
+    poster: '/videos/doverie/about-poster.png',
     alt: 'Главный экран банка «Доверие» над раскрытыми ладонями',
-    paragraphs: [
-      'Проект был разработан в рамках магистерской диссертации. Я самостоятельно сформулировал продуктовую гипотезу, разработал архитектуру социального слоя с учётом технических и юридических ограничений, спроектировал пользовательские сценарии и интерфейсы, собрал интерактивный прототип и обсудил концепцию с пользователями банковских приложений.',
-    ],
+    paragraphs: ['Проект был разработан в рамках магистерской диссертации. Я самостоятельно сформулировал продуктовую гипотезу, разработал архитектуру социального слоя с учётом технических и юридических ограничений, спроектировал пользовательские сценарии и интерфейсы, собрал интерактивный прототип и обсудил концепцию с пользователями банковских приложений.'],
     meta: [
       { term: 'Моя роль', value: 'продуктовый дизайнер и исследователь' },
       { term: 'Формат', value: 'самостоятельный магистерский проект' },
@@ -32,26 +32,44 @@ const stages: Stage[] = [
     ],
   },
   {
-    id: 'problem',
-    title: 'Проблема',
-    image: doverieProblem,
-    alt: 'Профиль пользователя банка «Доверие» с балансом, наградами и историей операций',
+    id: 'problem', title: 'Проблема', image: doverieFlow,
+    alt: 'Разрозненный процесс: обсуждение в мессенджере, перевод через банк, ручная сверка оплаты и потеря контекста',
     paragraphs: [
-      'При совместных расходах людям приходится постоянно переключаться между банковским приложением и мессенджерами.',
-      'В одном месте они договариваются о суммах и участниках, в другом переводят деньги, а затем вручную проверяют, кто уже заплатил.',
-      'Сам перевод выполняется быстро, но весь процесс вокруг него остаётся разрозненным. Добавление удобства должно логично встраиваться в уже существующий банковский интерфейс, не перегружая его базовые функции и не превращая приложение в super-app.',
-    ],
+    "При совместных расходах людям приходится постоянно переключаться между банковским приложением и мессенджерами.",
+    "В одном месте они договариваются о суммах и участниках, в другом переводят деньги, а затем вручную проверяют, кто уже заплатил.",
+    "Сам перевод выполняется быстро, но весь процесс вокруг него остаётся разрозненным. Добавление удобства должно логично встраиваться в уже существующий банковский интерфейс не перегружая его базовые функции преврещая приложение в super-app."
+],
   },
   {
-    id: 'result',
-    title: 'Результат',
-    image: doverieResult,
-    alt: 'Прототип банка «Доверие» с основными финансовыми сценариями над раскрытыми ладонями',
+    id: 'solution', title: 'Моё решение', image: doverieArchitecture,
+    alt: 'Модульная архитектура: социальный слой связывает базовый банк, общий счёт, переводы рядом, профиль, уведомления и друзей',
     paragraphs: [
-      'Я разработал архитектуру социального слоя и интерактивный прототип, объединяющий доверительные связи, совместные расходы и переводы поблизости. Следующим этапом проекта стало бы сценарное usability-тестирование. Это позволило бы проверить не только отношение к идее, но и понятность конкретных действий в интерфейсе.',
-    ],
+    "Основой концепции стал модуль «Друзья». \nМодуль «Друзья» это закрытый круг доверенных контактов внутри банковского приложения. Он связывает профиль пользователя, совместные счета, переводы поблизости, уведомления и настройки приватности.",
+    "Я разделил систему на независимые модули, чтобы социальный слой можно было развивать постепенно и не смешивать его с базовыми банковскими операциями."
+],
+  },
+  {
+    id: 'shared-account', title: '«Общий счёт»',
+    video: '/videos/doverie/shared-account.mp4',
+    poster: '/videos/doverie/shared-account-poster.png',
+    alt: 'Видеопрототип создания общего события и разделения расходов',
+    paragraphs: [
+    "Пользователь создаёт совместное событие, приглашает участников и добавляет расход. Сумму можно внести вручную или получить из отсканированного чека. \nВсе участники видят общий процесс в котором указан статус у каждого участника и сколько всего осталось внести.",
+    "Это заменяет несколько отдельных переводов и необходимость вручную напоминать каждому участнику об оплате."
+],
+  },
+  {
+    id: 'nearby', title: '«Рядом»',
+    video: '/videos/doverie/nearby.mp4',
+    poster: '/videos/doverie/nearby-poster.png',
+    alt: 'Видеопрототип перевода человеку поблизости',
+    paragraphs: [
+    "Сценарий «Рядом» позволяет выбрать человека, находящегося поблизости, и отправить ему перевод без поиска номера телефона или банковских реквизитов. Интерфейс не показывает точное расстояние или координаты. Вместо этого пользователь видит только категориальную близость, что снижает риск нежелательного раскрытия местоположения.",
+    "Для определения близости я рассматривал Bluetooth Low Energy и оценку сигнала через RSSI. У технологии есть ограничения: показания зависят от устройства, препятствий и окружающей среды. Поэтому решение требует проверки на реальных смартфонах и не должно использоваться для определения точного расстояния."
+],
   },
 ];
+const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Interaction Design', 'Prototyping'];
 ---
 
 <BaseLayout
@@ -59,13 +77,17 @@ const stages: Stage[] = [
   description="Кейс продуктового дизайна банковского приложения с социальными сценариями"
 >
   <main class="case-page">
+    <nav class="case-nav case-shell" aria-label="Навигация по портфолио">
+      <a href="/">← Главная</a>
+      <a href="https://t.me/sharpvoid">Связаться</a>
+    </nav>
     <header class="case-hero case-shell">
       <div class="case-hero__media">
         <Image
           src={doverieHero}
           alt="Главный экран банка «Доверие» на фоне мягкого голубого градиента"
           widths={[640, 960, 1322, 2080]}
-          sizes="(max-width: 600px) calc(100vw - 32px), (max-width: 1024px) calc(100vw - 60px), 1322px"
+          sizes="(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px"
           quality={90}
           loading="eager"
           fetchpriority="high"
@@ -75,6 +97,10 @@ const stages: Stage[] = [
       <div class="case-hero__copy">
         <h1>«Доверие»: социальные сценарии в банковском приложении</h1>
         <p>Идея создания социального слоя для банковского приложения, в которой объединяются финансовые операции и взаимодействие между знакомыми людьми.</p>
+      </div>
+      <div class="case-tags" data-tags>
+        {tags.map((tag, index) => <span class:list={['case-tag', { 'case-tag--extra': index > 1 }]}>{tag}</span>)}
+        <button class="case-tag case-tags__toggle" type="button" aria-expanded="false" aria-label="Показать ещё четыре направления">+4</button>
       </div>
     </header>
 
@@ -111,24 +137,49 @@ const stages: Stage[] = [
             </div>
 
             <div class="case-stage__mobile-visual" data-stage-image={stage.id}>
-              <Image src={stage.image} alt={stage.alt} quality={88} loading="lazy" />
+              {stage.image ? (
+                <Image src={stage.image} alt={stage.alt} quality={90} loading="lazy" />
+              ) : (
+                <video src={stage.video} poster={stage.poster} data-case-video
+                  muted loop playsinline controls preload="none" aria-label={stage.alt}></video>
+              )}
             </div>
           </article>
         ))}
       </div>
 
-      <div class="case-story__visual" aria-hidden="true">
+      <div class="case-story__visual">
         {stages.map((stage, index) => (
-          <Image
-            class="case-story__image"
-            src={stage.image}
-            alt=""
-            quality={90}
-            loading={index === 0 ? 'eager' : 'lazy'}
-            data-case-visual={stage.id}
-            data-active={index === 0 ? 'true' : 'false'}
-          />
+          <div class="case-story__image" data-case-visual={stage.id}
+            data-active={index === 0 ? 'true' : 'false'} inert={index !== 0}
+            aria-hidden={index !== 0 ? 'true' : undefined}>
+            {stage.image ? (
+              <Image src={stage.image} alt={stage.alt} quality={90} loading="eager" />
+            ) : (
+              <video src={stage.video} poster={stage.poster} data-case-video
+                muted loop playsinline controls preload="none" aria-label={stage.alt}></video>
+            )}
+          </div>
         ))}
+      </div>
+    </section>
+    <section class="case-contact case-shell" id="contacts" aria-labelledby="contact-title">
+      <div class="case-contact__pitch">
+        <h2 id="contact-title">Есть задача или подходящая роль?</h2>
+        <p>Буду рад обсудить продукт, команду или сотрудничество</p>
+        <a class="case-contact__button" href="https://t.me/sharpvoid">Связаться</a>
+      </div>
+      <nav class="case-project-nav" aria-label="Другие проекты">
+        <a href="/#projects">← Все проекты</a>
+        <a href="/#projects">Следующий кейс →</a>
+      </nav>
+      <div class="case-footer">
+        <Footer />
+        <div class="case-footer__links">
+          <span aria-disabled="true" title="Резюме пока не опубликовано">Резюме</span>
+          <a href="mailto:lisenkomike.v@gmail.com">lisenkomike.v@gmail.com</a>
+          <a href="https://t.me/sharpvoid">@sharpvoid</a>
+        </div>
       </div>
     </section>
   </main>
@@ -145,15 +196,70 @@ const stages: Stage[] = [
     .filter((trigger): trigger is HTMLElement => Boolean(trigger));
   const visualElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-visual]'));
 
+
+  const videos = [...document.querySelectorAll<HTMLVideoElement>('[data-case-video]')];
+  const visibleVideos = new Set<HTMLVideoElement>();
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  function syncVideos() {
+    videos.forEach((video) => {
+      const active = video.closest<HTMLElement>('[data-case-visual]')?.dataset.active !== 'false';
+      if (visibleVideos.has(video) && active && !reducedMotion.matches && !document.hidden) {
+        void video.play().catch(() => { /* Native controls remain available if autoplay is blocked. */ });
+      } else {
+        video.pause();
+      }
+    });
+  }
+  const videoObserver = new IntersectionObserver((entries) => {
+    entries.forEach(({ target, isIntersecting }) => {
+      const video = target as HTMLVideoElement;
+      if (isIntersecting) visibleVideos.add(video);
+      else visibleVideos.delete(video);
+    });
+    syncVideos();
+  }, { threshold: 0 });
+  videos.forEach(video => videoObserver.observe(video));
+  reducedMotion.addEventListener('change', syncVideos);
+  document.addEventListener('visibilitychange', syncVideos);
+  document.addEventListener('astro:before-swap', () => {
+    videoObserver.disconnect();
+    videos.forEach(video => video.pause());
+    reducedMotion.removeEventListener('change', syncVideos);
+    document.removeEventListener('visibilitychange', syncVideos);
+  }, { once: true });
+
+  const tags = document.querySelector<HTMLElement>('[data-tags]');
+  const toggle = tags?.querySelector<HTMLButtonElement>('button');
+  toggle?.addEventListener('click', () => {
+    const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.setAttribute('aria-label', expanded ? 'Скрыть дополнительные направления' : 'Показать ещё четыре направления');
+    toggle.textContent = expanded ? '−4' : '+4';
+    tags?.classList.toggle('is-expanded', expanded);
+  });
+
   if (story && triggers.length === stageElements.length && triggers.length > 0) {
     let activeIndex = 0;
     let tensionValue = 0;
     const clamp = (value: number, min: number, max: number) =>
       Math.min(max, Math.max(min, value));
+    const updateStageSpacing = () => {
+      const heights = stageElements.map(stage =>
+        stage.querySelector<HTMLElement>('.case-stage__content')?.offsetHeight ?? 0);
+      const extra = heights[0] * (1 - 0.6667);
+      stageElements.forEach((stage, index) => {
+        // Match Problem's visible gaps, including space hidden by the preceding scale.
+        const gap = activeIndex === 0 ? (index === 1 ? extra : 0)
+          : index === activeIndex ? extra
+          : index === activeIndex - 1 ? extra - heights[index] * (1 - 0.6667) : 0;
+        stage.style.setProperty('--case-stage-extra-gap', `${gap}px`);
+      });
+    };
     const setActiveIndex = (nextIndex: number) => {
       const boundedIndex = clamp(nextIndex, 0, stageElements.length - 1);
       if (boundedIndex === activeIndex) return;
       activeIndex = boundedIndex;
+      updateStageSpacing();
       if (story) story.dataset.centered = String(activeIndex > 0);
 
       stageElements.forEach((stage, index) => {
@@ -164,7 +270,10 @@ const stages: Stage[] = [
 
       visualElements.forEach((visual, index) => {
         visual.dataset.active = String(index === activeIndex);
+        visual.inert = index !== activeIndex;
+        visual.setAttribute('aria-hidden', String(index !== activeIndex));
       });
+      syncVideos();
     };
 
     const clearPreview = () => {
@@ -226,16 +335,11 @@ const stages: Stage[] = [
       onMeasure: () => {
         const visual = story.querySelector<HTMLElement>('.case-story__visual');
         const visualHeight = visual?.offsetHeight ?? 577;
-        story.style.setProperty('--case-centered-offset', `${Math.max(16, (window.innerHeight - visualHeight) / 2)}px`);
         const lastContent = stageElements.at(-1)?.querySelector<HTMLElement>('.case-stage__content');
         story.style.setProperty('--case-last-visual-space', `${(visualHeight + (lastContent?.offsetHeight ?? 0)) / 2}px`);
         story.dataset.centered = String(activeIndex > 0);
 
-        const about = stageElements[0]?.querySelector<HTMLElement>('.case-stage__content');
-        story.style.setProperty(
-          '--case-problem-extra-gap',
-          `${(about?.offsetHeight ?? 0) * (1 - 0.6667)}px`,
-        );
+        updateStageSpacing();
 
       },
     });
@@ -253,87 +357,39 @@ const stages: Stage[] = [
     --case-image-fade-duration: 340ms;
     --case-image-motion-duration: 440ms;
     --case-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-    padding-block: 43px 120px;
+    --page-padding: clamp(30px, calc(16.827vw - 142.31px), 100px);
+    padding-block: 34px 34px;
   }
-
-  .case-shell {
-    width: min(calc(100% - (var(--page-padding) * 2)), 1322px);
-    margin-inline: auto;
-  }
-
+  .case-shell { width: min(calc(100% - var(--page-padding) * 2), 1326px); margin-inline: auto; }
+  .case-nav, .case-project-nav { display: flex; justify-content: space-between; gap: 24px; color: var(--color-accent); }
+  .case-nav a, .case-project-nav a { text-decoration: none; }
+  .case-nav { margin-bottom: 54px; }
   .case-hero__media {
-    aspect-ratio: 1322 / 636;
-    overflow: hidden;
-    border: 1px solid #f2f2f2;
-    border-radius: 30px;
-    box-shadow: 14px 9px 35px rgb(24 94 185 / 6%);
+    height: 636px; overflow: hidden; border: 1px solid #f2f2f2;
+    border-radius: 30px; box-shadow: 14px 9px 35px rgb(24 94 185 / 6%);
   }
-
-  .case-hero__media :global(img) {
-    width: 100%;
-    height: 116.92%;
-    object-fit: cover;
-    object-position: 50% 0;
-  }
-
-  .case-hero__copy {
-    display: grid;
-    gap: 16px;
-    margin-top: 32px;
-  }
-
-  .case-hero h1,
-  .case-hero p,
-  .case-stage h2,
-  .case-stage p,
-  .case-stage dl,
-  .case-stage dd {
-    margin: 0;
-  }
-
-  .case-hero h1 {
-    font-size: 40px;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-
-  .case-hero p {
-    max-width: 900px;
-    font-family: var(--font-ui);
-    line-height: 1.25;
-  }
-
+  .case-hero__media :global(img) { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+  .case-hero__copy { display: grid; gap: 16px; margin-top: 32px; }
+  .case-hero h1, .case-hero p, .case-stage h2, .case-stage p,
+  .case-stage dl, .case-stage dd, .case-contact h2, .case-contact p { margin: 0; }
+  .case-hero h1 { font-size: 38px; font-weight: 700; line-height: 1.26; }
+  .case-hero p { font-size: 20px; line-height: 1.3; }
+  .case-tags { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 28px; }
+  .case-tag { padding: 5px 10px; border: 0; border-radius: 15px; background: #ebf9ff; color: #004d6e; font: 600 14px/18px var(--font-sans); }
+  .case-tags__toggle { display: none; cursor: pointer; }
+  .case-tags__toggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
   .case-story {
-    display: grid;
-    grid-template-columns: minmax(340px, 503px) minmax(420px, 577px);
-    justify-content: space-between;
-    align-items: start;
-    column-gap: clamp(64px, 12.6vw, 242px);
-    margin-top: 73px;
+    --case-visual-height: min(673px, calc(100svh - 32px));
+    --case-centered-offset: max(16px, calc((100vh - var(--case-visual-height)) / 2));
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start; column-gap: 82px; margin-top: 74px;
   }
-
-  .case-story__copy {
-    display: grid;
-    row-gap: var(--case-stage-spacing);
-  }
-
-  .case-stage {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    font-family: var(--font-ui);
-  }
-
+  .case-story__copy { display: grid; row-gap: var(--case-stage-spacing); min-width: 0; }
+  .case-stage { position: relative; display: flex; align-items: flex-start; }
   @media (min-width: 901px) {
-    .case-stage[data-case-stage='problem'] {
-      margin-bottom: var(--case-problem-extra-gap, 100px);
-    }
+    .case-stage { margin-bottom: var(--case-stage-extra-gap, 0px); }
   }
-
-  .case-stage:last-child {
-    min-height: max(50vh, calc(62vh - 80px), var(--case-last-visual-space, 0px));
-  }
-
+  .case-stage:last-child { min-height: max(50vh, calc(62vh - 80px), var(--case-last-visual-space, 0px)); }
   .case-stage__content {
     width: 100%;
     opacity: var(--case-inactive-opacity);
@@ -380,70 +436,34 @@ const stages: Stage[] = [
       scale(calc(0.6667 + var(--case-preview-progress, 0) * 0.1));
   }
 
-  .case-stage h2 {
-    margin-bottom: 24px;
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.25;
-  }
 
-  .case-stage__body {
-    display: grid;
-    gap: 16px;
-    font-size: 16px;
-    line-height: 1.25;
-  }
-
-  .case-stage dl {
-    display: grid;
-    margin-top: 8px;
-  }
-
-  .case-stage dl div {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-  }
-
-  .case-stage dt {
-    flex: 0 0 auto;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .case-stage dt::after {
-    content: ':';
-  }
-
-
-  .case-stage__mobile-visual {
-    display: none;
-  }
-
+  .case-stage h2 { margin-bottom: 18px; font-size: 24px; font-weight: 700; line-height: 1.3; }
+  .case-stage__body { display: grid; gap: 20px; font-size: 16px; line-height: 1.25; }
+  .case-stage__body p { white-space: pre-line; }
+  .case-stage dl div { display: inline; }
+  .case-stage dl div::after { content: ''; display: block; }
+  .case-stage dt { display: inline; font-weight: 700; white-space: nowrap; }
+  .case-stage dt::after { content: ': '; }
+  .case-stage dd { display: inline; }
+  .case-stage__mobile-visual { display: none; }
   .case-story__visual {
-    position: sticky;
-    top: var(--case-sticky-offset);
-    width: min(100%, 577px);
-    aspect-ratio: 1;
+    position: sticky; top: var(--case-sticky-offset);
+    width: 100%; height: var(--case-visual-height);
     justify-self: end;
-    overflow: hidden;
-    border: 2px solid #ebeff9;
-    border-radius: 30px;
-    background: white;
     transition: top var(--case-image-motion-duration) var(--case-ease-out);
   }
-
   @media (min-width: 901px) {
-    .case-story[data-centered='true'] .case-story__visual {
-      top: var(--case-centered-offset);
-    }
+    .case-story[data-centered='true'] .case-story__visual { top: var(--case-centered-offset); }
   }
-
   .case-story__image {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
     opacity: 0;
     transform: translateY(13px) scale(0.985);
     transition:
@@ -454,148 +474,81 @@ const stages: Stage[] = [
 
   .case-story__image[data-active='true'] {
     z-index: 1;
+    pointer-events: auto;
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 
-  /* The Figma export is 577 x 586: the final 9 rows are transparent.
-     Fit the square artwork and clip only that empty export area. */
-  .case-story__image[data-case-visual='problem'],
-  .case-stage__mobile-visual[data-stage-image='problem'] :global(img) {
-    height: calc(100% * 586 / 577);
-    object-fit: fill;
-    object-position: top;
-  }
 
+  .case-story__image :global(img), .case-story__image video {
+    display: block; width: 100%; max-height: 100%; border-radius: 30px;
+  }
+  .case-story__image :global(img) { height: auto; object-fit: contain; }
+  .case-story__image video { height: 100%; object-fit: cover; }
+  .case-story__image[data-case-visual='shared-account'] video,
+  .case-stage__mobile-visual[data-stage-image='shared-account'] video { object-position: 54% center; }
+  .case-story__image[data-case-visual='about'] video { height: auto; aspect-ratio: 1; object-fit: contain; border: 2px solid #ebeff9; }
+  .case-contact { margin-top: 226.5px; }
+  .case-contact__pitch { display: grid; justify-items: center; text-align: center; gap: 12px; }
+  .case-contact h2 { font-size: 24px; line-height: 1.3; font-weight: 700; }
+  .case-contact p { max-width: 304px; }
+  .case-contact__button {
+    display: flex; justify-content: center; align-items: center; width: 230px;
+    margin-top: 28px; padding: 10px 20px; border-radius: 10px;
+    color: white; background: var(--color-button); font-weight: 500; text-decoration: none;
+  }
+  .case-project-nav { margin-top: 72px; }
+  .case-footer { display: flex; justify-content: space-between; gap: 32px; align-items: center; margin-top: 99px; }
+  .case-footer :global(.site-footer) { position: static; margin: 0; align-self: auto; }
+  .case-footer__links { display: flex; gap: 28px; color: var(--color-accent); }
+  .case-footer__links span { text-decoration: underline; }
+  @media (min-width: 1680px) {
+    .case-story { grid-template-columns: 503px minmax(0, 675px); column-gap: 148px; }
+    .case-story { --case-visual-height: min(675px, calc(100svh - 32px)); }
+  }
   @media (max-width: 1100px) {
-    .case-story {
-      grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.25fr);
-      column-gap: 64px;
-    }
+    .case-story { column-gap: 64px; }
+    .case-hero__media { height: 540px; }
+    .case-footer { flex-direction: column; gap: 34px; }
   }
-
   @media (max-width: 900px) {
-    .case-page {
-      padding-top: 30px;
+    .case-page { --page-padding: 30px; }
+    .case-story { display: block; margin-top: 121px; }
+    .case-story__copy { gap: 121px; }
+    .case-stage, .case-stage:first-child, .case-stage:last-child {
+      display: flex; flex-direction: column; min-height: 0; gap: 36px; padding: 0;
     }
-
-    .case-shell {
-      width: calc(100% - (var(--page-padding) * 2));
+    .case-stage__content, .case-stage.is-active .case-stage__content {
+      opacity: 1; transform: none; transition: none;
     }
-
-    .case-hero__media {
-      border-radius: 15px;
-    }
-
-    .case-story {
-      display: block;
-      margin-top: 80px;
-    }
-
-    .case-story__copy {
-      display: grid;
-      gap: 72px;
-    }
-
-    .case-stage,
-    .case-stage:first-child,
-      .case-stage:last-child {
-      display: grid;
-      min-height: 0;
-      gap: 28px;
-      padding: 0;
-    }
-
-    .case-stage__content {
-      opacity: 1;
-      transform: none;
-      transition: none;
-    }
-
-    .case-stage__mobile-visual {
-      display: block;
-      overflow: hidden;
-      aspect-ratio: 1;
-      border: 2px solid #ebeff9;
-      border-radius: 20px;
-    }
-
-    .case-stage__mobile-visual :global(img) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .case-stage__mobile-visual[data-stage-image='problem'] :global(img) {
-      height: calc(100% * 586 / 577);
-      object-fit: fill;
-    }
-
-    .case-story__visual {
-      display: none;
-    }
+    .case-stage__mobile-visual { display: block; order: -1; width: 100%; overflow: hidden; border-radius: 30px; }
+    .case-stage__mobile-visual :global(img) { width: 100%; height: auto; }
+    .case-stage__mobile-visual video { display: block; width: 100%; height: 673px; object-fit: cover; }
+    .case-stage__mobile-visual[data-stage-image='about'] video { height: auto; aspect-ratio: 1; border: 2px solid #ebeff9; border-radius: 30px; }
+    .case-story__visual { display: none; }
   }
-
   @media (max-width: 600px) {
-    .case-page {
-      padding-block: 16px 72px;
-    }
-
-    .case-hero__copy {
-      margin-top: 24px;
-    }
-
-    .case-hero h1 {
-      font-size: clamp(30px, 9vw, 36px);
-      line-height: 1.12;
-    }
-
-    .case-hero p {
-      font-size: 15px;
-      line-height: 1.35;
-    }
-
-    .case-story {
-      margin-top: 64px;
-    }
-
-    .case-story__copy {
-      gap: 64px;
-    }
-
-    .case-stage h2 {
-      margin-bottom: 16px;
-    }
-
-    .case-stage__body {
-      line-height: 1.35;
-    }
-    .case-stage dl {
-      gap: 12px;
-    }
-
-
-    .case-stage dl div {
-      display: block;
-    }
-
-    .case-stage dd {
-      margin-top: 2px;
-    }
+    .case-page { padding-top: 60px; }
+    .case-nav { margin-bottom: 31px; }
+    .case-hero__media { height: 339px; border-radius: 15px; }
+    .case-hero h1 { font-size: 24px; line-height: 31px; }
+    .case-hero p { font-size: 14px; line-height: 18px; }
+    .case-tag--extra { display: none; }
+    .case-tags.is-expanded .case-tag--extra { display: inline; }
+    .case-tags__toggle { display: inline; }
+    .case-stage h2 { margin-bottom: 12px; font-size: 20px; line-height: 26px; }
+    .case-stage__body { gap: 18px; font-size: 14px; line-height: 18px; }
+    .case-stage__mobile-visual { border-radius: 20px; }
+    .case-stage__mobile-visual video { height: auto; aspect-ratio: 330 / 673; }
+    .case-stage__mobile-visual[data-stage-image='about'] video { border-radius: 20px; }
+    .case-project-nav { margin-top: 150px; gap: 12px; }
+    .case-footer { gap: 27px; }
+    .case-footer__links { flex-direction: column; align-items: center; gap: 28px; }
+    .case-contact__pitch { gap: 18px; }
+    .case-contact__button { margin-top: 22px; }
   }
-
   @media (prefers-reduced-motion: reduce) {
-    .case-story__visual {
-      transition: none;
-    }
-
-    .case-stage__content {
-      transition: none;
-    }
-
-    .case-story__image {
-      transform: none;
-      transition: opacity 1ms linear;
-    }
+    .case-story__visual, .case-stage__content { transition: none; }
+    .case-story__image { transform: none; transition: opacity 1ms linear; }
   }
 </style>
