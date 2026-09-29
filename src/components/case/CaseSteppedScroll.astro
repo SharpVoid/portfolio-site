@@ -1,0 +1,60 @@
+---
+import CaseMedia from './CaseMedia.astro';
+import type { CaseStage } from './types';
+interface Props { stages: CaseStage[]; }
+const { stages } = Astro.props;
+// One window-scroll story per page; IDs must be stable and unique.
+if (!stages.length || new Set(stages.map(stage => stage.id)).size !== stages.length) {
+  throw new Error('CaseSteppedScroll requires at least one stage and unique stage IDs');
+}
+---
+<section class="case-story case-shell" data-case-story aria-label="Кратко о проекте">
+      <div class="case-story__copy">
+        {stages.map((stage, index) => (
+          <article
+            class:list={['case-stage', { 'is-active': index === 0 }]}
+            data-case-stage={stage.id}
+            data-mobile-align={stage.mobileAlign}
+          >
+            <span
+              class:list={['case-stage__observer-target', { 'is-delayed': index > 0 }]}
+              data-case-trigger
+              aria-hidden="true"
+            ></span>
+
+            <div class="case-stage__content">
+              <h2>{stage.title}</h2>
+
+              <div class="case-stage__body">
+                {stage.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+
+                {stage.meta && (
+                  <dl>
+                    {stage.meta.map((item) => (
+                      <div>
+                        <dt>{item.term}</dt>
+                        <dd>{item.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+              </div>
+            </div>
+
+            <div class="case-stage__mobile-visual" data-stage-image={stage.id} data-tablet-radius={stage.tabletRadius} data-mobile-radius={stage.mobileRadius} data-active={index === 0 ? 'true' : 'false'}>
+              <CaseMedia media={stage} loading="lazy" />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="case-story__visual">
+        {stages.map((stage, index) => (
+          <div class="case-story__image" data-case-visual={stage.id}
+            data-active={index === 0 ? 'true' : 'false'} inert={index !== 0}
+            aria-hidden={index !== 0 ? 'true' : undefined}>
+            <CaseMedia media={stage} loading="eager" />
+          </div>
+        ))}
+      </div>
+    </section>
