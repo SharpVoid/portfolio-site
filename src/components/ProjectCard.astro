@@ -29,7 +29,7 @@ const fallback = sources.at(-1)!;
 const Card = href ? 'a' : 'div';
 ---
 <article id={id} class:list={['project-card', { 'project-card--secondary': secondary }]} aria-labelledby={`${id}-title`}>
-  <Card class="project-card__link" href={href}>
+  <Card class="project-card__link" href={href} target={href?.startsWith('http') ? '_blank' : undefined} rel={href?.startsWith('http') ? 'noopener' : undefined}>
     <div class="project-card__media">
     <picture>
       {sources.map((source) => <>
