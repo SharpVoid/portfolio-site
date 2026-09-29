@@ -53,7 +53,7 @@ export const focusml: CaseData = {
       ],
     },
     {
-      id: 'result', title: 'Результат', image: result,
+      id: 'result', title: 'Результат', image: result, desktopHug: true,
       alt: 'Обезличенные экраны готового интерфейса FocusML: разметка изображений и создание моделей',
       paragraphs: [
         'В результате была спроектирована основная архитектура FocusML и интерфейсы, необходимые для реализации первой версии продукта.',
