@@ -481,7 +481,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   const setupFallback = () => {
     if (destroyed || suspended) return;
     const preserveStep = wheelOwnsState && (mobileEnabled()
-      || (desktopQuery.matches && activeIndex > 0 && isStoryInWorkingArea()));
+      || (desktopQuery.matches && isStoryInWorkingArea()));
     touchPoint = null;
     nativeTouch = false;
     observer?.disconnect();
@@ -553,7 +553,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       wheelOwnsState = true;
       lastObservedY = window.scrollY;
       triggers.forEach(trigger => observer?.observe(trigger));
-      if (desktopQuery.matches && activeIndex > 0 && isStoryInWorkingArea() && !reducedMotionQuery.matches) {
+      if (desktopQuery.matches && isStoryInWorkingArea() && !reducedMotionQuery.matches) {
         springToActiveStage(0);
       }
     },

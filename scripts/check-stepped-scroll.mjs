@@ -55,8 +55,8 @@ async function expect(stage, centered = false) {
     assert.ok(Math.abs(value.center - value.viewportCenter) <= 2, JSON.stringify(value));
     assert.ok(Math.abs(value.visual - value.viewportCenter) <= 2, JSON.stringify(value));
     assert.ok(Math.abs(value.mediaCenter - value.viewportCenter) <= 2, JSON.stringify(value));
-    assert.ok(Math.abs(value.gapBefore - value.expectedGap) <= 2, JSON.stringify(value));
-    if (value.gapAfter !== null) assert.ok(Math.abs(value.gapAfter - value.expectedGap) <= 2, JSON.stringify(value));
+    if (value.gapBefore !== null) assert.ok(Math.abs(value.gapBefore - value.expectedGap) <= 2, JSON.stringify(value));
+    if (stage !== 'about' && value.gapAfter !== null) assert.ok(Math.abs(value.gapAfter - value.expectedGap) <= 2, JSON.stringify(value));
   }
   return value;
 }
@@ -69,6 +69,7 @@ async function step(direction) {
 try {
   await enter();
   const initial = await expect('about');
+  assert.ok(Math.abs(initial.center - initial.mediaCenter) <= 2, JSON.stringify(initial));
   await page.mouse.wheel(0, 20);
   await pause(200);
   const tension = await expect('about');
@@ -99,7 +100,7 @@ try {
   await step(-1);
   await expect('problem', true);
   await step(-1);
-  await expect('about');
+  await expect('about', true);
   const firstY = (await state()).y;
   await page.mouse.wheel(0, -80);
   await pause(300);

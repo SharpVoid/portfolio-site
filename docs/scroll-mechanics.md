@@ -182,8 +182,9 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 
 | Значение / место | Эффект при изменении |
 | --- | --- |
-| REST_LINE=0.38 | Передаётся в core, используется для первого шага |
-| restPosition, шаги >0 | H/2 - content.offsetHeight/2 + trigger.offsetTop: центр текста совпадает с центром окна |
+| REST_LINE=0.38 | Передаётся в core: линия наблюдения и входа в секцию |
+| restPosition, все desktop-шаги | H/2 - content.offsetHeight/2 + trigger.offsetTop: центр текста совпадает с центром окна |
+| --case-first-text-offset | max(0, (visual.offsetHeight - firstContent.offsetHeight)/2), onMeasure; desktop padding-top колонки текста выравнивает первый текст с видео ещё до sticky |
 | MAX_TENSION_PX=14 | Максимальное смещение текста. Больше — заметнее натяжение |
 | progress=abs(tension)^1.35 | Больше степень — слабее ранняя реакция, сильнее у порога |
 | active scale=1-progress×0.025 | Больше коэффициент — сильнее уменьшение |
@@ -192,7 +193,7 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 | preview scale=0.6667+progress×0.1 | Больше 0.1 — сильнее рост соседнего текста |
 | preview translate=activeTranslate×0.6 | Больше коэффициент — больше движение соседнего текста |
 | is-tensioning при progress>0.001 | Порог отключения CSS transitions для непосредственного отклика |
-| --case-sticky-offset:72px | Верх изображения на первом шаге. Больше — ниже |
+| --case-centered-offset | max(16px, (100vh - visualHeight)/2): sticky-позиция всех desktop-шагов, включая первый |
 | --case-centered-offset | CSS max(16px,(100vh - --case-visual-height)/2); центр не зависит от сохранённого JS-замера |
 | --case-stage-spacing:150px | Расстояние между layout-блоками. Больше — длиннее переход |
 | --case-stage-extra-gap | updateStageSpacing(): extra=about.offsetHeight×(1-0.6667); после активного шага >0 ставится extra, перед ним — extra−previousHeight×(1-0.6667). Видимые отступы с обеих сторон равны 150px+extra, как у «Проблемы». Пересчёт при смене шага и onMeasure; mobile не применяет margin |
@@ -233,8 +234,8 @@ const controller = createSteppedScroll({
 });
 ~~~
 
-setActiveIndex переключает .is-active у текста, data-active у изображения
-и data-centered у story. Изображения сопоставлены **по индексу**, а не поиском
+setActiveIndex переключает .is-active у текста и data-active у изображения.
+Изображения сопоставлены **по индексу**, а не поиском
 по ID; массивы обязаны иметь одинаковый порядок.
 renderTension добавляет .is-tensioning, .is-preview и CSS variables.
 clearTension их удаляет. Ни текст, ни изображение не создаются заново при шаге.
@@ -434,8 +435,9 @@ const steps = [
 - Смена знака внутри committed gesture — дрожание/инерция, не новый шаг.
 - Не добавлять DOM reflow через изменение высоты активного текста.
   Scale меняет только видимый размер; offsetHeight остаётся стабильным.
-- Первый шаг намеренно не центрируется как остальные. Возврат к нему имеет
-  другую геометрию. Sticky top меняется CSS-переходом 440ms, не скачком.
+- Первый шаг теперь центрируется так же, как остальные. Desktop padding-top
+  колонки текста измеряется в onMeasure; не переносить его на article, иначе
+  абсолютный trigger и текст получат разные координаты. Mobile padding не применяется.
 - «30px задержка» исторического marker компенсируется restPosition.
   Документируем фактическую формулу, не обещаем дополнительную задержку.
 - Старый crop прозрачного края problem удалён вместе с заменой изображения на схему.
@@ -443,7 +445,7 @@ const steps = [
   несмотря на раннюю идею «без spring/zoom». Рефакторинг не меняет UX.
 - Клавиатура/scrollbar — native fallback, не stepped жест. Touch native только
   без opt-in, вне секции, на внешней границе, при reduced motion/исключениях.
-- Resize сбрасывает tension; контролируемый desktop-шаг >0 сохраняется и
+- Resize сбрасывает tension; любой контролируемый desktop-шаг сохраняется и
   центрируется заново. Иначе изменение высоты окна разносило центр текста и медиа.
 - Обычный primary pointerdown внутри viewport больше не прерывает desktop spring:
   клик по тексту/медиа во время перехода раньше оставлял его на полпути.
@@ -550,7 +552,7 @@ scrollBehavior восстановлен; повторные destroy и нова�
   is-delayed, case-stage__content, case-stage__body, case-stage__mobile-visual,
   case-story__visual, case-story__image, is-active, is-preview, is-tensioning.
 - attributes: data-case-story; data-case-stage=id; data-case-trigger;
-  data-case-visual=id; data-active=true/false; data-centered=true/false;
+  data-case-visual=id; data-active=true/false;
   data-stage-image=id.
   Mobile visual также имеет data-active=true/false; не получает inert/aria-hidden,
   потому что линейный контент остаётся доступным для чтения и native navigation.

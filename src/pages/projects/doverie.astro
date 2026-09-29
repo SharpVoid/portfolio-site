@@ -311,7 +311,6 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
       if (boundedIndex === activeIndex) return;
       activeIndex = boundedIndex;
       updateStageSpacing();
-      if (story) story.dataset.centered = String(activeIndex > 0);
 
       stageElements.forEach((stage, index) => {
         stage.classList.toggle('is-active', index === activeIndex);
@@ -375,7 +374,6 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
         const top = index >= 3 ? 24 : Math.max(24, (window.innerHeight - stageElements[index].offsetHeight) / 2);
         return top + triggers[index].offsetTop;
       }
-      if (index === 0) return window.innerHeight * REST_LINE;
       const content = stageElements[index]?.querySelector<HTMLElement>('.case-stage__content');
       const triggerOffset = triggers[index]?.offsetTop ?? 0;
       return window.innerHeight / 2 - (content?.offsetHeight ?? 0) / 2 + triggerOffset;
@@ -402,9 +400,10 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
       onMeasure: () => {
         const visual = story.querySelector<HTMLElement>('.case-story__visual');
         const visualHeight = visual?.offsetHeight ?? 577;
+        const firstContent = stageElements[0].querySelector<HTMLElement>('.case-stage__content');
+        story.style.setProperty('--case-first-text-offset', `${Math.max(0, (visualHeight - (firstContent?.offsetHeight ?? 0)) / 2)}px`);
         const lastContent = stageElements.at(-1)?.querySelector<HTMLElement>('.case-stage__content');
         story.style.setProperty('--case-last-visual-space', `${(visualHeight + (lastContent?.offsetHeight ?? 0)) / 2}px`);
-        story.dataset.centered = String(activeIndex > 0);
 
         updateStageSpacing();
 
@@ -476,6 +475,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
   .case-story__copy { display: grid; row-gap: var(--case-stage-spacing); min-width: 0; }
   .case-stage { position: relative; display: flex; align-items: flex-start; }
   @media (min-width: 901px) {
+    .case-story__copy { padding-top: var(--case-first-text-offset, 0px); }
     .case-stage { margin-bottom: var(--case-stage-extra-gap, 0px); }
   }
   .case-stage:last-child { min-height: max(50vh, calc(62vh - 80px), var(--case-last-visual-space, 0px)); }
@@ -542,7 +542,7 @@ const tags = ['FinTech', 'Mobile Banking', 'Product Design', 'UX Research', 'Int
     transition: top var(--case-image-motion-duration) var(--case-ease-out);
   }
   @media (min-width: 901px) {
-    .case-story[data-centered='true'] .case-story__visual { top: var(--case-centered-offset); }
+    .case-story__visual { top: var(--case-centered-offset); }
   }
   .case-story__image {
     position: absolute;
