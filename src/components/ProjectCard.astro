@@ -100,8 +100,10 @@ const Card = href ? 'a' : 'div';
   @media (max-width: 600px) { #focusml .project-card__video { object-position: 42% center; } }
   .project-card__content { display: grid; gap: 6px; }
   h2, p { margin: 0; font-size: 16px; line-height: 20px; }
-  h2 { color: var(--color-accent); font-weight: 600; }
-  a:hover h2 { text-decoration: underline; text-underline-offset: 3px; }
+  h2 { position: relative; justify-self: start; color: var(--color-accent); font-weight: 600; }
+  h2::after { content: ''; position: absolute; inset-inline: 0; bottom: -2px; height: 2px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 250ms ease; }
+  .project-card:hover h2::after, .project-card__link:focus-visible h2::after { transform: scaleX(1); }
+  @media (prefers-reduced-motion: reduce) { h2::after { transition: none; } }
   .project-card--secondary .project-card__media {
     box-shadow: 217px 137px 103px rgb(179 203 234 / 1%), 122px 77px 87px rgb(179 203 234 / 5%), 54px 34px 64px rgb(179 203 234 / 9%), 14px 9px 35px rgb(179 203 234 / 10%);
   }
