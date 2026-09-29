@@ -199,7 +199,7 @@ html:has(.case-image-dialog[open]) { scrollbar-gutter: stable; }
   .case-footer { display: flex; justify-content: space-between; gap: 32px; align-items: center; margin-top: 99px; }
   .case-footer .site-footer { position: static; margin: 0; align-self: auto; }
   .case-footer__links { display: flex; gap: 28px; color: var(--color-accent); }
-  .case-footer__links span { text-decoration: underline; }
+  .case-footer__links [data-resume-download] { text-decoration: underline; }
   @media (min-width: 1680px) {
     .case-story { grid-template-columns: 503px minmax(0, 675px); column-gap: 148px; }
     .case-story { --case-visual-height: min(675px, calc(100svh - 32px)); }

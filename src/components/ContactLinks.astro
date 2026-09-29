@@ -1,14 +1,42 @@
 ---
 interface Props { resumeHref?: string; }
-const { resumeHref } = Astro.props;
+const { resumeHref = '/resume.pdf' } = Astro.props;
 ---
 <div class="contact-links">
-  {resumeHref ? <a href={resumeHref}>Резюме</a> : <span class="contact-links__resume">Резюме</span>}
+  <a href={resumeHref} download="Михаил Лисенко Продуктовый дизайнер Резюме.pdf" data-resume-download><span aria-live="polite">Резюме</span></a>
   <a href="mailto:lisenkomike.v@gmail.com">lisenkomike.v@gmail.com</a>
   <a href="https://t.me/sharpvoid">@sharpvoid</a>
 </div>
 <style>
   .contact-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; color: var(--color-accent); font-family: var(--font-sans); font-size: 16px; line-height: 20px; }
-  .contact-links a, .contact-links__resume { text-decoration: underline; text-underline-position: under; }
+  .contact-links a { text-decoration: underline; text-underline-position: under; }
   @media (max-width: 600px) { .contact-links { flex-direction: column; align-items: center; gap: 28px; } }
 </style>
+<script>
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-resume-download]')) {
+    const label = link.querySelector('span');
+    if (!label) continue;
+    let fadeTimer: number;
+    let resetTimer: number;
+    let restoreTimer: number;
+    link.addEventListener('click', () => {
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(resetTimer);
+      window.clearTimeout(restoreTimer);
+      const fade = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150;
+      label.style.transition = fade ? `opacity ${fade}ms ease` : 'none';
+      label.style.opacity = '0';
+      fadeTimer = window.setTimeout(() => {
+        label.textContent = 'Резюме ✓';
+        label.style.opacity = '1';
+        resetTimer = window.setTimeout(() => {
+          label.style.opacity = '0';
+          restoreTimer = window.setTimeout(() => {
+            label.textContent = 'Резюме';
+            label.style.opacity = '1';
+          }, fade);
+        }, 1000);
+      }, fade);
+    });
+  }
+</script>

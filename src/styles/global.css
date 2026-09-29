@@ -15,13 +15,13 @@ body {
 img { display: block; max-width: 100%; }
 a { color: inherit; }
 a:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
-a:not(.profile__contact, .case-contact__button, .project-card__link), .case-tags__toggle { transition: opacity 250ms ease; }
-a:not(.profile__contact, .case-contact__button, .project-card__link):hover, .case-tags__toggle:hover { opacity: 0.5; }
+a:not(.profile__contact, .case-contact__button, .project-card__link), .project-card h2, .case-tags__toggle { transition: opacity 250ms ease; }
+a:not(.profile__contact, .case-contact__button, .project-card__link):hover, .project-card:hover h2, .case-tags__toggle:hover { opacity: 0.5; }
 .page-container {
   width: min(100% - var(--page-padding) * 2, var(--content-width));
   margin-inline: auto;
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  a:not(.profile__contact, .case-contact__button, .project-card__link), .case-tags__toggle { transition: none; }
+  a:not(.profile__contact, .case-contact__button, .project-card__link), .project-card h2, .case-tags__toggle { transition: none; }
 }
