@@ -1,6 +1,7 @@
 # Scroll mechanics — stepped / snap / tension
 
-Снимок реализации: 28 сентября 2026. Маршрут: /projects/doverie/.
+Снимок реализации: 29 сентября 2026. Маршрут: /projects/doverie/.
+Шаблон кейсов и создание следующей страницы: [case-template.md](case-template.md).
 Этот документ описывает **существующее поведение**, а не идеальный scroll API.
 После обновления дизайна изменены разметка, стили и медиа страницы.
 Desktop-алгоритм и параметры жеста/анимации сохранены. Touch — opt-in адаптер
@@ -13,11 +14,12 @@ Desktop-алгоритм и параметры жеста/анимации со�
 | Часть | Файл | Ответственность |
 | --- | --- | --- |
 | Reusable core | src/lib/steppedScroll.ts | Ввод, накопление delta, шаг, блокировка жеста, spring прокрутки, native fallback, resize, cleanup |
-| Page-specific logic | src/pages/projects/doverie.astro, клиентский script | Выбор DOM, презентационное состояние, tension, расчёт центров и отступов |
-| Styles | doverie.astro, scoped style | Sticky, текст, изображения, адаптив, переходы и reduced motion |
+| Общая презентационная логика кейсов | src/lib/casePage.ts | Выбор DOM, презентационное состояние, tension, расчёт центров и отступов; импортируется CaseLayout |
+| Styles | src/styles/case.css | Единственная копия стилей кейсов: sticky, текст, изображения, адаптив, переходы и reduced motion |
+| Разметка | src/components/case/CaseSteppedScroll.astro и CaseMedia.astro | Оба представления массива шагов, stable triggers и media |
 | Animation logic | runSpring в core + CSS страницы | Core двигает window.scrollY; страница рисует tension и переходы |
 | Проверка | scripts/check-stepped-scroll.mjs | Браузерные регрессионные проверки |
-| Данные / ресурсы | stages и src/assets/projects/doverie-{hero,flow,architecture}.png и public/videos/doverie/ | Контент; не нужны reusable core |
+| Данные / ресурсы | src/data/cases/doverie.ts и src/assets/projects/doverie-{hero,flow,architecture}.png и public/videos/doverie/ | Контент; не нужны reusable core |
 | Окружение | src/layouts/BaseLayout.astro, src/styles/{global,tokens,fonts}.css | Оболочка, шрифты; core от них не зависит |
 
 Модуль не импортирует Astro, библиотеки анимации или CSS. В нём нет case-селекторов.
@@ -100,11 +102,12 @@ mobile-версия остаётся native. Wheel на узком экране 
   шага. Tension одинаково смещает текст и mobile media, но НЕ marker/article.
 - При resize/orientation контролируемого mobile-шага индекс сохраняется,
   геометрия пересчитывается и spring доводит до нового anchor. Desktop resize
-  также доводит контролируемые шаги >0 до нового центра. Вне контролируемого
+  также доводит все контролируемые шаги до нового центра. Вне контролируемого
   шага используется fallback.
 
-Mobile restPosition: для первых трёх шагов весь article (media+text) центрируется,
-если помещается; минимум top24px. Для shared-account и nearby top всегда24px.
+Mobile restPosition: по умолчанию весь article (media+text) центрируется,
+если помещается; минимум top24px. Шаги с mobileAlign:'top' в данных (у Doverie
+shared-account и nearby) получают top24px независимо от позиции в массиве.
 Передаваемый restPosition включает trigger.offsetTop, как desktop.
 scrollRange.start = documentTop(article)−top;
 scrollRange.end = max(start,documentBottom(article)−innerHeight+24).
@@ -178,7 +181,7 @@ line delta multiplier 16; page multiplier innerHeight; dt 0.001–0.032s;
 Увеличение допусков делает синхронизацию/завершение менее точными,
 уменьшение может обнажить округление браузером. Без причины не менять.
 
-### Page-specific: doverie.astro
+### Презентация: src/lib/casePage.ts + src/styles/case.css
 
 | Значение / место | Эффект при изменении |
 | --- | --- |
@@ -250,7 +253,7 @@ API контроллера:
   Doverie вызывает их при открытии/закрытии нативного image dialog; фон блокируется
   через html overflow:hidden с восстановлением предыдущего значения. Resume
   измеряет геометрию и сохраняет текущий шаг, не перескакивая по fallback.
-  На desktop для шагов >0 внутри рабочей области также доводит текст к центру
+  На desktop для всех шагов внутри рабочей области также доводит текст к центру
   медиа общей spring-анимацией; mobile и reduced motion не перепозиционируются.
 - getState(): диагностический снимок activeIndex, accumulatedDelta,
   gestureActive, committedInGesture, wheelOwnsState, animationMode.
@@ -308,7 +311,8 @@ wheel listeners не поддержаны этим минимальным изв
 Перенесите src/lib/steppedScroll.ts и этот документ.
 Минимальный пример не требует BaseLayout, шрифтов, изображений или UI-framework.
 Для полной копии «Доверия» дополнительно нужны сама страница, её три PNG, папка public/videos/doverie/ с MP4 и постерами,
-Footer, BaseLayout и импортируемые им стили/шрифты. Сохраните scoped CSS страницы.
+Footer, BaseLayout и импортируемые им стили/шрифты. Для полного шаблона также
+нужны components/case/, lib/casePage.ts, styles/case.css и data/cases/doverie.ts.
 
 Runtime зависимости: стандартные DOM API (IntersectionObserver, matchMedia,
 requestAnimationFrame, AbortController, document.fonts). npm зависимости
@@ -533,8 +537,11 @@ scrollBehavior восстановлен; повторные destroy и нова�
 - setup: при create, fonts.ready, resize, desktop/reduced query change;
   window listeners: wheel, scroll, pointerdown, touchstart/move/end/cancel, keydown, resize.
 
-**Page:** src/pages/projects/doverie.astro
-- data: stages = about / problem / solution / shared-account / nearby, три map-представления через
+**Page:** src/pages/projects/doverie.astro — только композиция компонентов.
+**Data:** src/data/cases/doverie.ts.
+**Presentation:** src/lib/casePage.ts; **styles:** src/styles/case.css.
+**Markup:** src/components/case/{CaseLayout,CaseHero,CaseSteppedScroll,CaseMedia,CaseContact}.astro.
+- data: stages = about / problem / solution / shared-account / nearby; представления через
   текст+mobile visual в первом map и desktop visuals во втором.
 - client functions: clamp, setActiveIndex, clearPreview, renderTension,
   clearTension, restPosition, syncVideos; inline onMeasure.
@@ -542,8 +549,9 @@ scrollBehavior восстановлен; повторные destroy и нова�
   активное видео, inactive paused; reduced motion/hidden document отключают autoplay.
   Native controls позволяют ручной просмотр. poster — статичный кадр MP4.
 - .case-story__image теперь wrapper с img/video; inactive wrappers inert и aria-hidden.
-- [data-tags] / .case-tags__toggle раскрывает четыре дополнительных тега на mobile.
-- initialization: клиентский script после BaseLayout; createSteppedScroll
+- [data-tags] / .case-tags__toggle раскрывает tags.length−2 дополнительных тега на mobile;
+  data-extra-count задаётся CaseHero, у Doverie по-прежнему 4.
+- initialization: script в CaseLayout импортирует src/lib/casePage.ts; createSteppedScroll
   внутри проверки story/triggers; cleanup на astro:before-swap.
 - selectors: [data-case-story], [data-case-stage], [data-case-trigger],
   [data-case-visual], .case-stage__content, .case-story__visual.
@@ -553,12 +561,14 @@ scrollBehavior восстановлен; повторные destroy и нова�
   case-story__visual, case-story__image, is-active, is-preview, is-tensioning.
 - attributes: data-case-story; data-case-stage=id; data-case-trigger;
   data-case-visual=id; data-active=true/false;
-  data-stage-image=id.
+  data-stage-image=id; data-mobile-align=top (необязательно).
+  Медиа-настройки: data-square, data-media-bordered, data-tablet-radius=15,
+  data-mobile-radius=15; не привязаны к названиям/ID шагов.
   Mobile visual также имеет data-active=true/false; не получает inert/aria-hidden,
   потому что линейный контент остаётся доступным для чтения и native navigation.
 - dynamic CSS vars: --case-active-translate-y, --case-active-scale,
   --case-active-opacity, --case-preview-progress,
-  --case-last-visual-space, --case-stage-extra-gap.
+  --case-last-visual-space, --case-stage-extra-gap, --case-first-text-offset.
 - static CSS vars: --case-sticky-offset, --case-stage-spacing,
   --case-visual-height, --case-centered-offset,
   --case-inactive-opacity, --case-transition-duration,
