@@ -1,0 +1,23 @@
+---
+import { Image } from 'astro:assets';
+import type { CaseMediaData } from './types';
+interface Props {
+  media: CaseMediaData;
+  hero?: boolean;
+  loading?: 'eager' | 'lazy';
+}
+const { media, hero = false, loading = 'lazy' } = Astro.props;
+---
+{media.image ? (
+  <Image src={media.image} alt={media.alt} quality={90} loading={hero ? 'eager' : loading}
+    widths={hero ? [640, 960, 1322, 2080] : undefined}
+    sizes={hero ? '(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px' : undefined}
+    fetchpriority={hero ? 'high' : undefined}
+    data-media-bordered={media.bordered || undefined}
+    data-image-preview={media.image.src} role="button" tabindex="0" aria-haspopup="dialog" />
+) : (
+  <video src={media.video} poster={media.poster} data-case-video
+    data-square={media.square || undefined}
+    style={media.objectPosition ? `object-position: ${media.objectPosition}` : undefined}
+    muted loop playsinline controls preload="none" aria-label={media.alt}></video>
+)}

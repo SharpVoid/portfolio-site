@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CaseContact from './CaseContact.astro';
+import '../../styles/case.css';
+interface Props { title: string; description: string; nextHref?: string; }
+const { title, description, nextHref } = Astro.props;
+---
+<BaseLayout title={title} description={description}>
+  <main class="case-page">
+    <nav class="case-nav case-shell" aria-label="Навигация по портфолио">
+      <a href="/">← Главная</a>
+      <a href="https://t.me/sharpvoid">Связаться</a>
+    </nav>
+    <slot />
+    <CaseContact nextHref={nextHref} />
+  </main>
+  <dialog class="case-image-dialog" aria-label="Просмотр изображения" data-scroll-native>
+    <button class="case-image-dialog__close" type="button" aria-label="Закрыть изображение" autofocus>×</button>
+    <img class="case-image-dialog__image" alt="" />
+  </dialog>
+</BaseLayout>
+<script>
+  import '../../lib/casePage';
+</script>
