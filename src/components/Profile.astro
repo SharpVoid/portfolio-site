@@ -44,7 +44,17 @@ const { resumeHref } = Astro.props;
   .profile__achievements p { max-width: 690px; }
   h2 { font-size: 20px; font-weight: 500; line-height: 26px; }
   .profile__contacts { display: grid; gap: 28px; margin-top: 28px; scroll-margin-top: 50px; }
-  .profile__contact { display: flex; justify-content: center; align-items: center; padding: 10px 20px; border-radius: 10px; background: var(--color-button); color: white; font-weight: 500; line-height: 20px; text-decoration: none; }
+  .profile__contact { position: relative; isolation: isolate; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 10px 20px; border-radius: 10px; background: var(--color-button); color: white; font-weight: 500; line-height: 20px; text-decoration: none; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .profile__contact:active { background-color: #82bbfb; transform: scale(1.1); transition-duration: 140ms; }
+  .profile__contact::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 24%) 50%, transparent 70%); transform: translateX(-100%); }
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .profile__contact:hover::before { animation: profile-button-shimmer 850ms ease-out forwards; }
+  }
+  @keyframes profile-button-shimmer { to { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .profile__contact { transition: none; }
+    .profile__contact:active { transform: none; }
+  }
   .profile__achievement-space, .profile__intro-space { display: none; }
   @media (max-width: 1024px) { .profile__extended-role { display: none; } .profile { position: static; grid-template-columns: 420px minmax(0, 1fr); gap: clamp(28px, calc(82.1138vw - 739.845px), 101px); } }
   @media (max-width: 900px) {
