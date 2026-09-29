@@ -13,8 +13,10 @@ const { media, hero = false, loading = 'lazy' } = Astro.props;
     widths={hero ? [640, 960, 1322, 2080] : undefined}
     sizes={hero ? '(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px' : undefined}
     fetchpriority={hero ? 'high' : undefined}
+    style={hero && media.objectPosition ? `--case-hero-mobile-position: ${media.objectPosition}` : undefined}
     data-media-bordered={!hero || media.bordered || undefined}
-    data-image-preview={media.image.src} role="button" tabindex="0" aria-haspopup="dialog" />
+    data-image-preview={hero ? undefined : media.image.src}
+    role={hero ? undefined : 'button'} tabindex={hero ? undefined : '0'} aria-haspopup={hero ? undefined : 'dialog'} />
 ) : (
   <video src={media.video} poster={media.poster} data-case-video
     data-square={media.square || undefined}

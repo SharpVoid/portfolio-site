@@ -12,7 +12,7 @@ export const focusml: CaseData = {
   title: 'FocusML',
   intro: 'Платформа для разметки данных и работы с моделями компьютерного зрения. Проект под NDA, поэтому большая часть изображений обезличина.',
   tags: ['B2B SaaS', 'AI/ML', 'Computer Vision', 'Product Design', 'UX Architecture', 'Prototyping', 'MVP'],
-  hero: { image: hero, alt: 'Интерфейс FocusML с разметкой арбузов на изображении' },
+  hero: { image: hero, alt: 'Интерфейс FocusML с разметкой арбузов на изображении', objectPosition: '9% top' },
   stages: [
     {
       id: 'about', title: 'О проекте', image: about, bordered: true,

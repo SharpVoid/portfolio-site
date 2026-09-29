@@ -233,6 +233,7 @@ html:has(.case-image-dialog[open]) { scrollbar-gutter: stable; }
     .case-page { padding-top: 60px; }
     .case-nav { margin-bottom: 31px; }
     .case-hero__media { height: 339px; border-radius: 15px; }
+    .case-hero__media img { object-position: var(--case-hero-mobile-position, center top); }
     .case-hero h1 { font-size: 24px; line-height: 31px; }
     .case-hero p { font-size: 14px; line-height: 18px; }
     .case-tag--extra { display: none; }
