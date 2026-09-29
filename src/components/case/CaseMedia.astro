@@ -13,7 +13,7 @@ const { media, hero = false, loading = 'lazy' } = Astro.props;
     widths={hero ? [640, 960, 1322, 2080] : undefined}
     sizes={hero ? '(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px' : undefined}
     fetchpriority={hero ? 'high' : undefined}
-    data-media-bordered={media.bordered || undefined}
+    data-media-bordered={!hero || media.bordered || undefined}
     data-image-preview={media.image.src} role="button" tabindex="0" aria-haspopup="dialog" />
 ) : (
   <video src={media.video} poster={media.poster} data-case-video

@@ -245,7 +245,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
           ? window.innerHeight
           : 1;
 
-    return clamp(event.deltaY * multiplier, -MAX_EVENT_DELTA, MAX_EVENT_DELTA);
+    return event.deltaY * multiplier;
   };
 
   const finishGesture = () => {
@@ -298,7 +298,8 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       return;
     }
 
-    const delta = normalizeWheelDelta(event);
+    const rawDelta = normalizeWheelDelta(event);
+    const delta = clamp(rawDelta, -MAX_EVENT_DELTA, MAX_EVENT_DELTA);
     const direction = Math.sign(delta);
     if (!direction) return;
 
@@ -326,7 +327,28 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       return;
     }
 
-    if (!isStoryInWorkingArea() || (isOutwardBoundary && accumulatedDelta === 0)) {
+    if (!isStoryInWorkingArea()) {
+      const bounds = story.getBoundingClientRect();
+      const restY = window.innerHeight * REST_LINE;
+      const entering = direction > 0
+        ? bounds.top > restY && bounds.top - rawDelta <= restY
+        : bounds.bottom < restY && bounds.bottom - rawDelta >= restY;
+      if (entering) {
+        event.preventDefault();
+        resetInteraction();
+        setActiveIndex(direction > 0 ? 0 : triggers.length - 1);
+        wheelOwnsState = true;
+        gestureActive = true;
+        committedInGesture = true;
+        lastWheelTime = now;
+        armGestureEnd();
+        springToActiveStage(0);
+        return;
+      }
+      resetInteraction();
+      return;
+    }
+    if (isOutwardBoundary && accumulatedDelta === 0) {
       resetInteraction();
       return;
     }

@@ -208,6 +208,7 @@ html:has(.case-image-dialog[open]) { scrollbar-gutter: stable; }
   }
   @media (max-width: 900px) {
     .case-page { --page-padding: 30px; }
+    .case-footer__links { display: none; }
     .case-story { display: block; margin-top: 121px; }
     .case-story__copy { gap: 121px; }
     .case-stage, .case-stage:first-child, .case-stage:last-child {
