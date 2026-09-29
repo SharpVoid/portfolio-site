@@ -189,6 +189,11 @@ import { createSteppedScroll } from './steppedScroll';
       container: story,
       triggers,
       restLine: REST_LINE,
+      threshold: 90,
+      maxEventDelta: 90,
+      springStiffness: 220,
+      springDamping: 24,
+      springTimeScale: 1,
       restPosition,
       touch: {
         threshold: 80,

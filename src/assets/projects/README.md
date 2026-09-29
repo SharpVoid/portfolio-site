@@ -9,7 +9,7 @@ All images are individual cover assets exported by Figma, never whole-page scree
 | FocusML | 841:12091 | 841:12141 |
 | Банк «Доверие» | 841:12097 | 841:12147 |
 | Дизайн-арена | 841:12103 | 841:12153 |
-| АтомРепорт | 841:12108 | 841:12159 |
+| ConsulAI | 841:12108 | 841:12159 |
 
 The complete image fills are used where a node export includes external shadows or would bake in a narrow crop. The bank desktop is the individual cover export. CSS applies the approved corner radii and shadows. Full phone cover images are sized by height, preserving phone scale between viewport sizes.
 
