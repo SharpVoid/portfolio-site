@@ -68,7 +68,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   let accumulatedDelta = 0;
   let gestureActive = false;
   let committedInGesture = false;
-  let entryGesture = false;
   let lastWheelTime = 0;
   let nativeWheelDirection = 0;
   let gestureIdleTimer: number | undefined;
@@ -80,10 +79,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   let springVelocity = 0;
   let springTarget = 0;
   let springTimeScale = SPRING_TIME_SCALE;
-  let wheelSpeed = 1;
-  let queuedWheelDirection = 0;
-  let queuedWheelDelta = 0;
-  let scrollStartedAt = 0;
   let observer: IntersectionObserver | undefined;
   let previousScrollBehavior: string | null = null;
   let lastObservedY = window.scrollY;
@@ -141,14 +136,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     animationFrame = 0;
     animationMode = null;
     springVelocity = 0;
-
-    if (completedMode === 'scroll' && queuedWheelDirection) {
-      const direction = queuedWheelDirection;
-      queuedWheelDirection = 0;
-      queuedWheelDelta = 0;
-      commitStep(direction, wheelSpeed);
-      return;
-    }
     if (completedMode === 'tension') scheduleFallback();
   };
 
@@ -194,7 +181,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     if (mode === 'scroll') {
       previousScrollBehavior = document.documentElement.style.scrollBehavior;
       document.documentElement.style.scrollBehavior = 'auto';
-      scrollStartedAt = performance.now();
     }
 
     springPosition = position;
@@ -263,8 +249,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
   const finishGesture = () => {
     gestureActive = false;
     committedInGesture = false;
-    entryGesture = false;
-    queuedWheelDelta = 0;
     gestureIdleTimer = undefined;
     // Keep unfinished progress: separate light wheel ticks continue the pull.
     // Only an explicit reverse movement or native navigation releases it.
@@ -328,39 +312,12 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     }
     const now = performance.now();
     const continuesGesture = gestureActive && now - lastWheelTime < GESTURE_IDLE_MS;
-    // Use both notch size and gesture cadence; cap the spring boost at 1.5x.
-    const force = Math.max(Math.abs(rawDelta), continuesGesture
-      ? Math.abs(rawDelta) * 100 / Math.max(16, now - lastWheelTime) : 0);
-    const inputSpeed = 1 + 0.5 * clamp((force - STEP_THRESHOLD) / (STEP_THRESHOLD * 3), 0, 1);
-    wheelSpeed = continuesGesture ? Math.max(wheelSpeed, inputSpeed) : inputSpeed;
-
-    // Residual momentum from entering the story must not trigger its next step.
-    if (entryGesture && continuesGesture) {
-      if (animationMode === 'scroll' || now - scrollStartedAt < 450) {
-        event.preventDefault();
-        lastWheelTime = now;
-        armGestureEnd();
-        return;
-      }
-      entryGesture = false;
-    }
+    // Only the size of this impulse changes speed; frequent small deltas stay gentle.
+    const inputSpeed = 1 + 0.25 * clamp((Math.abs(rawDelta) - STEP_THRESHOLD)
+      / (STEP_THRESHOLD * 3), 0, 1);
 
     if (animationMode === 'scroll') {
       event.preventDefault();
-      springTimeScale = Math.max(springTimeScale, SPRING_TIME_SCALE * wheelSpeed);
-      // Queue the next notch; a trackpad stream can advance only after this stage is readable.
-      if ((event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL
-        || (Math.abs(rawDelta) >= STEP_THRESHOLD && now - lastWheelTime >= 50))
-        && activeIndex + direction >= 0 && activeIndex + direction < triggers.length) {
-        queuedWheelDirection = direction;
-      } else if (now - scrollStartedAt >= 350) {
-        queuedWheelDelta = clamp(queuedWheelDelta + delta, -STEP_THRESHOLD, STEP_THRESHOLD);
-        const queuedDirection = Math.sign(queuedWheelDelta);
-        if (Math.abs(queuedWheelDelta) >= STEP_THRESHOLD
-          && activeIndex + queuedDirection >= 0 && activeIndex + queuedDirection < triggers.length) {
-          queuedWheelDirection = queuedDirection;
-        }
-      }
       gestureActive = true;
       committedInGesture = true;
       lastWheelTime = now;
@@ -368,25 +325,9 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
       return;
     }
 
-    // Direction jitter is still the same gesture, including after commitment.
+    // One continuous gesture can commit only one step.
     if (continuesGesture && committedInGesture) {
       event.preventDefault();
-      if (event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL
-        || (Math.abs(rawDelta) >= STEP_THRESHOLD && now - lastWheelTime >= 50)) {
-        if (activeIndex + direction >= 0 && activeIndex + direction < triggers.length) {
-          queuedWheelDelta = 0;
-          commitStep(direction, wheelSpeed);
-        }
-      } else if (now - scrollStartedAt >= 350) {
-        queuedWheelDelta = clamp(queuedWheelDelta + delta, -STEP_THRESHOLD, STEP_THRESHOLD);
-        if (Math.abs(queuedWheelDelta) >= STEP_THRESHOLD) {
-          const nextDirection = Math.sign(queuedWheelDelta);
-          queuedWheelDelta = 0;
-          if (activeIndex + nextDirection >= 0 && activeIndex + nextDirection < triggers.length) {
-            commitStep(nextDirection, wheelSpeed);
-          }
-        }
-      }
       lastWheelTime = now;
       armGestureEnd();
       return;
@@ -411,7 +352,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
         wheelOwnsState = true;
         gestureActive = true;
         committedInGesture = true;
-        entryGesture = true;
         nativeWheelDirection = 0;
         lastWheelTime = now;
         armGestureEnd();
@@ -436,7 +376,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
     // Reverse impulses first unwind existing tension, rather than initiating
     // an opposite step while the finger is still finishing its previous swipe.
-    accumulate(delta, STEP_THRESHOLD, wheelSpeed);
+    accumulate(delta, STEP_THRESHOLD, inputSpeed);
   };
 
   const touchRange = (index: number) => {
@@ -532,12 +472,8 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     gestureIdleTimer = undefined;
     gestureActive = false;
     committedInGesture = false;
-    entryGesture = false;
     wheelOwnsState = false;
     accumulatedDelta = 0;
-    queuedWheelDirection = 0;
-    queuedWheelDelta = 0;
-    wheelSpeed = 1;
     cancelAnimation();
     clearTension();
     lastObservedY = window.scrollY;
@@ -549,6 +485,14 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     const moved = Math.abs(window.scrollY - lastObservedY) > 0.5;
     lastObservedY = window.scrollY;
     if (animationMode) return;
+    if (desktopQuery.matches && moved && wheelOwnsState && !reducedMotionQuery.matches
+      && lastWheelTime > 0 && performance.now() - lastWheelTime < 500) {
+      const trigger = triggers[activeIndex];
+      const target = clamp(window.scrollY + trigger.getBoundingClientRect().top
+        - restPosition(activeIndex), 0, document.documentElement.scrollHeight - window.innerHeight);
+      instantScroll(target);
+      return;
+    }
     if (desktopQuery.matches && moved && !reducedMotionQuery.matches
       && lastWheelTime > 0 && performance.now() - lastWheelTime < 500) {
       const bounds = story.getBoundingClientRect();
@@ -563,7 +507,6 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
         wheelOwnsState = true;
         gestureActive = true;
         committedInGesture = true;
-        entryGesture = true;
         nativeWheelDirection = 0;
         lastWheelTime = performance.now();
         armGestureEnd();
