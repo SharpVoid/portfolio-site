@@ -3,6 +3,7 @@ import type { ImageMetadata } from 'astro';
 export type CaseMediaData = {
   alt: string;
   bordered?: boolean;
+  desktopHug?: boolean;
   square?: boolean;
   objectPosition?: string;
 } & ({ image: ImageMetadata; video?: never; poster?: never } | { image?: never; video: string; poster?: string });

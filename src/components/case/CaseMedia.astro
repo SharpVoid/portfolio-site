@@ -15,6 +15,7 @@ const { media, hero = false, loading = 'lazy' } = Astro.props;
     fetchpriority={hero ? 'high' : undefined}
     style={hero && media.objectPosition ? `--case-hero-mobile-position: ${media.objectPosition}` : undefined}
     data-media-bordered={!hero || media.bordered || undefined}
+    data-media-desktop-hug={media.desktopHug || undefined}
     data-image-preview={hero ? undefined : media.image.src}
     role={hero ? undefined : 'button'} tabindex={hero ? undefined : '0'} aria-haspopup={hero ? undefined : 'dialog'} />
 ) : (

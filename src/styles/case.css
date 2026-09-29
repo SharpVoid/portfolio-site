@@ -156,6 +156,9 @@ html:has(.case-image-dialog[open]) { scrollbar-gutter: stable; }
     display: block; width: 100%; max-height: 100%; border-radius: 30px;
   }
   .case-story__image img { height: auto; object-fit: contain; }
+  @media (min-width: 901px) {
+    .case-story__image img[data-media-desktop-hug] { width: auto; max-width: 100%; }
+  }
   /* Inward stroke preserves the image's dimensions and surrounding layout. */
   img[data-media-bordered] {
     outline: 2px solid #eaeff9;
