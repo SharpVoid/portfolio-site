@@ -12,9 +12,10 @@ interface Props {
   video?: string;
   priority?: boolean;
   secondary?: boolean;
+  confirmNavigation?: boolean;
   variants?: { image: ImageMetadata; media: string }[];
 }
-const { id, title, description, image, mobileImage, alt, href, video, priority = false, secondary = false, variants = [] } = Astro.props;
+const { id, title, description, image, mobileImage, alt, href, video, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
 const crops = [{ image: mobileImage, media: '(max-width: 600px)' }, ...variants, { image, media: undefined }];
 const sources = await Promise.all(crops.map(async (crop) => {
   // Keep enough source pixels for tall covers at 2x without shipping the 4K original.
@@ -29,7 +30,8 @@ const fallback = sources.at(-1)!;
 const Card = href ? 'a' : 'div';
 ---
 <article id={id} class:list={['project-card', { 'project-card--secondary': secondary }]} aria-labelledby={`${id}-title`}>
-  <Card class="project-card__link" href={href} target={href?.startsWith('http') ? '_blank' : undefined} rel={href?.startsWith('http') ? 'noopener' : undefined}>
+  <Card class="project-card__link" href={href} target={href?.startsWith('http') && !confirmNavigation ? '_blank' : undefined} rel={href?.startsWith('http') ? 'noopener' : undefined}
+    data-confirm-navigation={confirmNavigation || undefined} aria-haspopup={confirmNavigation ? 'dialog' : undefined} aria-controls={confirmNavigation ? 'external-case-dialog' : undefined}>
     <div class="project-card__media">
     <picture>
       {sources.map((source) => <>

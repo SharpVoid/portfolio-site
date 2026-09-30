@@ -42,6 +42,7 @@ const projects = [
     id: 'atomreport', video: '/videos/atomreport.mp4', title: 'ConsulAI',
     description: 'Веб-сервис подготовки и согласования цифровой отчётности',
     image: atomDesktop, mobileImage: atomMobile, secondary: true, href: 'https://www.consulai.ru/',
+    confirmNavigation: true,
     alt: 'Светящиеся цифровые документы и курсор на обложке ConsulAI',
   },
 ];
@@ -54,8 +55,54 @@ const projects = [
     </section>
     <Footer />
   </main>
+  <dialog id="external-case-dialog" class="external-case-dialog" aria-labelledby="external-case-message">
+    <p id="external-case-message">Для просмотра кейса вы переходите на отдельный сайт</p>
+    <form method="dialog" class="external-case-dialog__actions">
+      <button class="external-case-dialog__confirm" value="confirm" autofocus>Окей</button>
+      <button value="cancel">Отмена</button>
+    </form>
+  </dialog>
 </BaseLayout>
+<script>
+  const link = document.querySelector<HTMLAnchorElement>('[data-confirm-navigation]')!;
+  const dialog = document.querySelector<HTMLDialogElement>('#external-case-dialog')!;
+  link.addEventListener('click', event => {
+    event.preventDefault();
+    dialog.returnValue = '';
+    dialog.showModal();
+  });
+  dialog.addEventListener('close', () => {
+    if (dialog.returnValue === 'confirm') window.location.assign(link.href);
+  });
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  });
+</script>
 <style>
+  :global(html:has(.external-case-dialog[open])) { overflow: hidden; scrollbar-gutter: stable; }
+  .external-case-dialog {
+    margin: auto; padding: 32px; width: 440px;
+    max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px);
+    border: 2px solid #eaeff9; border-radius: 30px;
+    background: var(--color-background); color: var(--color-text);
+    box-shadow: 14px 9px 35px rgb(24 94 185 / 6%); overscroll-behavior: contain;
+  }
+  @supports (corner-shape: squircle) { .external-case-dialog { corner-shape: squircle; } }
+  .external-case-dialog::backdrop { background: rgb(0 0 0 / 50%); }
+  .external-case-dialog p { margin: 0; font-size: 20px; font-weight: 500; line-height: 26px; text-wrap: balance; }
+  .external-case-dialog__actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); margin-top: var(--space-lg); }
+  .external-case-dialog button {
+    min-height: 44px; padding: 10px 20px; border: 0; border-radius: 10px;
+    background: var(--color-surface-muted); color: var(--color-text-muted);
+    font: 500 16px/20px var(--font-sans); cursor: pointer;
+  }
+  .external-case-dialog .external-case-dialog__confirm { background: var(--color-accent); color: white; }
+  .external-case-dialog button:hover { filter: brightness(0.95); }
+  .external-case-dialog button:active { filter: brightness(0.9); }
+  .external-case-dialog button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  @media (max-width: 600px) { .external-case-dialog { padding: 24px; border-radius: 20px; } }
   .portfolio { display: grid; grid-template-columns: 419px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
   .portfolio > :global(.profile) { grid-column: 1; grid-row: 1; }
   @media (min-width: 1025px) and (max-height: 941px) {
