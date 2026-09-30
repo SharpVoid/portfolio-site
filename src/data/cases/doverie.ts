@@ -1,13 +1,13 @@
 import type { CaseData, CaseStage } from '../../components/case/types';
-import doverieHero from '../../assets/projects/doverie-hero.png';
-import doverieFlow from '../../assets/projects/doverie-flow.png';
-import doverieArchitecture from '../../assets/projects/doverie-architecture.png';
+import doverieHero from '../../assets/projects/doverie-hero.webp';
+import doverieFlow from '../../assets/projects/doverie-flow.webp';
+import doverieArchitecture from '../../assets/projects/doverie-architecture.webp';
 
 const stages: CaseStage[] = [
   {
     id: 'about', title: 'О проекте', square: true,
     video: '/videos/doverie/about.mp4',
-    poster: '/videos/doverie/about-poster.png',
+    poster: '/videos/doverie/about-poster.webp',
     alt: 'Главный экран банка «Доверие» над раскрытыми ладонями',
     paragraphs: ['Проект был разработан в рамках магистерской диссертации. Я самостоятельно сформулировал продуктовую гипотезу, разработал архитектуру социального слоя с учётом технических и юридических ограничений, спроектировал пользовательские сценарии и интерфейсы, собрал интерактивный прототип и обсудил концепцию с пользователями банковских приложений.'],
     meta: [
@@ -36,7 +36,7 @@ const stages: CaseStage[] = [
   {
     id: 'shared-account', title: '«Общий счёт»', mobileAlign: 'top', objectPosition: '54% center',
     video: '/videos/doverie/shared-account.mp4',
-    poster: '/videos/doverie/shared-account-poster.png',
+    poster: '/videos/doverie/shared-account-poster.webp',
     alt: 'Видеопрототип создания общего события и разделения расходов',
     paragraphs: [
     "Пользователь создаёт совместное событие, приглашает участников и добавляет расход. Сумму можно внести вручную или получить из отсканированного чека. \nВсе участники видят общий процесс в котором указан статус у каждого участника и сколько всего осталось внести.",
@@ -46,7 +46,7 @@ const stages: CaseStage[] = [
   {
     id: 'nearby', title: '«Рядом»', mobileAlign: 'top',
     video: '/videos/doverie/nearby.mp4',
-    poster: '/videos/doverie/nearby-poster.png',
+    poster: '/videos/doverie/nearby-poster.webp',
     alt: 'Видеопрототип перевода человеку поблизости',
     paragraphs: [
     "Сценарий «Рядом» позволяет выбрать человека, находящегося поблизости, и отправить ему перевод без поиска номера телефона или банковских реквизитов. Интерфейс не показывает точное расстояние или координаты. Вместо этого пользователь видит только категориальную близость, что снижает риск нежелательного раскрытия местоположения.",

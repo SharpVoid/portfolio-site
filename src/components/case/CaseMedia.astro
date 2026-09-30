@@ -19,8 +19,12 @@ const { media, hero = false, loading = 'lazy' } = Astro.props;
     data-image-preview={hero ? undefined : media.image.src}
     role={hero ? undefined : 'button'} tabindex={hero ? undefined : '0'} aria-haspopup={hero ? undefined : 'dialog'} />
 ) : (
-  <video src={media.video} poster={media.poster} data-case-video
+  <video poster={media.poster} data-case-video data-title={media.alt}
     data-square={media.square || undefined}
     style={media.objectPosition ? `object-position: ${media.objectPosition}` : undefined}
-    muted loop playsinline controls preload="none" aria-label={media.alt}></video>
+    autoplay muted loop playsinline preload={hero ? 'metadata' : 'none'}
+    role="button" tabindex="0" aria-label={`Приостановить видео: ${media.alt}`}>
+    {media.webm && <source data-src={media.webm} type="video/webm" />}
+    <source data-src={media.video} type="video/mp4" />
+  </video>
 )}

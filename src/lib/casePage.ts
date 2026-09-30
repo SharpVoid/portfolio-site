@@ -1,4 +1,5 @@
 import { createSteppedScroll } from './steppedScroll';
+import { createVideoPlayback } from './videoPlayback';
   const REST_LINE = 0.38;
   const MAX_TENSION_PX = 14;
   const story = document.querySelector<HTMLElement>('[data-case-story]');
@@ -52,37 +53,12 @@ import { createSteppedScroll } from './steppedScroll';
   }, { once: true });
 
 
-  const videos = [...document.querySelectorAll<HTMLVideoElement>('[data-case-video]')];
-  const visibleVideos = new Set<HTMLVideoElement>();
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const syncVideos = createVideoPlayback(
+    [...document.querySelectorAll<HTMLVideoElement>('[data-case-video]')],
+    video => video.closest<HTMLElement>('[data-case-visual], [data-stage-image]')?.dataset.active !== 'false'
+      && !imageDialog.open,
+  );
   const mobile = window.matchMedia('(max-width: 900px)');
-  function syncVideos() {
-    videos.forEach((video) => {
-      const active = video.closest<HTMLElement>('[data-case-visual], [data-stage-image]')?.dataset.active !== 'false';
-      if (visibleVideos.has(video) && active && !reducedMotion.matches && !document.hidden && !imageDialog.open) {
-        void video.play().catch(() => { /* Native controls remain available if autoplay is blocked. */ });
-      } else {
-        video.pause();
-      }
-    });
-  }
-  const videoObserver = new IntersectionObserver((entries) => {
-    entries.forEach(({ target, isIntersecting }) => {
-      const video = target as HTMLVideoElement;
-      if (isIntersecting) visibleVideos.add(video);
-      else visibleVideos.delete(video);
-    });
-    syncVideos();
-  }, { threshold: 0 });
-  videos.forEach(video => videoObserver.observe(video));
-  reducedMotion.addEventListener('change', syncVideos);
-  document.addEventListener('visibilitychange', syncVideos);
-  document.addEventListener('astro:before-swap', () => {
-    videoObserver.disconnect();
-    videos.forEach(video => video.pause());
-    reducedMotion.removeEventListener('change', syncVideos);
-    document.removeEventListener('visibilitychange', syncVideos);
-  }, { once: true });
 
   const tags = document.querySelector<HTMLElement>('[data-tags]');
   const toggle = tags?.querySelector<HTMLButtonElement>('button');

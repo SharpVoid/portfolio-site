@@ -1,10 +1,10 @@
 import type { CaseData } from '../../components/case/types';
-import hero from '../../assets/projects/focusml-hero.png';
-import about from '../../assets/projects/focusml-about.png';
-import structure from '../../assets/projects/focusml-structure.png';
-import interfaceImage from '../../assets/projects/focusml-interface.png';
-import team from '../../assets/projects/focusml-team.png';
-import result from '../../assets/projects/focusml-result.png';
+import hero from '../../assets/projects/focusml-hero.webp';
+import about from '../../assets/projects/focusml-about.webp';
+import structure from '../../assets/projects/focusml-structure.webp';
+import interfaceImage from '../../assets/projects/focusml-interface.webp';
+import team from '../../assets/projects/focusml-team.webp';
+import result from '../../assets/projects/focusml-result.webp';
 
 export const focusml: CaseData = {
   seoTitle: 'FocusML — платформа для разметки данных и работы с моделями компьютерного зрения',

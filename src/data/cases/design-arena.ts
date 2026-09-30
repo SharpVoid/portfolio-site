@@ -1,8 +1,8 @@
 import type { CaseData } from '../../components/case/types';
-import hero from '../../assets/projects/arena-desktop.png';
-import task from '../../assets/projects/arena-task.png';
-import structure from '../../assets/projects/arena-structure.png';
-import result from '../../assets/projects/arena-result.png';
+import hero from '../../assets/projects/arena-desktop.webp';
+import task from '../../assets/projects/arena-task.webp';
+import structure from '../../assets/projects/arena-structure.webp';
+import result from '../../assets/projects/arena-result.webp';
 
 export const designArena: CaseData = {
   seoTitle: 'Дизайн-арена — приложение для отслеживания калорий',

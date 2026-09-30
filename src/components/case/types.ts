@@ -6,7 +6,7 @@ export type CaseMediaData = {
   desktopHug?: boolean;
   square?: boolean;
   objectPosition?: string;
-} & ({ image: ImageMetadata; video?: never; poster?: never } | { image?: never; video: string; poster?: string });
+} & ({ image: ImageMetadata; video?: never; webm?: never; poster?: never } | { image?: never; video: string; webm?: string; poster?: string });
 
 export type CaseStage = CaseMediaData & {
   id: string;

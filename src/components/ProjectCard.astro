@@ -10,12 +10,13 @@ interface Props {
   alt: string;
   href?: string;
   video?: string;
+  webm?: string;
   priority?: boolean;
   secondary?: boolean;
   confirmNavigation?: boolean;
   variants?: { image: ImageMetadata; media: string }[];
 }
-const { id, title, description, image, mobileImage, alt, href, video, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
+const { id, title, description, image, mobileImage, alt, href, video, webm, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
 const crops = [{ image: mobileImage, media: '(max-width: 600px)' }, ...variants, { image, media: undefined }];
 const sources = await Promise.all(crops.map(async (crop) => {
   // Keep enough source pixels for tall covers at 2x without shipping the 4K original.
@@ -41,7 +42,10 @@ const Card = href ? 'a' : 'div';
       <img src={fallback.webp.src} width={fallback.webp.attributes.width} height={fallback.webp.attributes.height}
         alt={alt} loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} decoding="async" />
     </picture>
-    {video && <video class="project-card__video" data-src={video} width={id === 'focusml' ? 1900 : id === 'atomreport' ? 1860 : 1920} height={id === 'focusml' ? 1100 : id === 'atomreport' ? 1112 : 1080} muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>}
+    {video && <video class="project-card__video" poster={fallback.webp.src} width={id === 'focusml' ? 1900 : id === 'atomreport' ? 1860 : 1920} height={id === 'focusml' ? 1100 : id === 'atomreport' ? 1112 : 1080} autoplay muted loop playsinline preload={priority ? 'metadata' : 'none'} aria-hidden="true" tabindex="-1">
+      {webm && <source data-src={webm} type="video/webm" />}
+      <source data-src={video} type="video/mp4" />
+    </video>}
     </div>
     <div class="project-card__content">
       <h2 id={`${id}-title`}>{title}</h2>
@@ -51,41 +55,8 @@ const Card = href ? 'a' : 'div';
   {video && <button class="project-card__playback" type="button" hidden aria-label={`Приостановить видео: ${title}`} data-title={title}>Ⅱ</button>}
 </article>
 <script>
-  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const videos = [...document.querySelectorAll<HTMLVideoElement>('.project-card__video')];
-  const visible = new Set<HTMLVideoElement>();
-  const stopped = new Set<HTMLVideoElement>();
-  function update(video: HTMLVideoElement) {
-    const button = video.closest('article')?.querySelector<HTMLButtonElement>('.project-card__playback');
-    const shouldPlay = visible.has(video) && !stopped.has(video) && !motion.matches && !document.hidden;
-    if (shouldPlay) {
-      if (!video.getAttribute('src')) video.src = video.dataset.src!;
-      video.muted = true;
-      void video.play().catch(() => { video.classList.remove('is-playing'); });
-    } else video.pause();
-    if (motion.matches) video.classList.remove('is-playing');
-    if (button) {
-      button.hidden = motion.matches || !video.classList.contains('is-playing');
-      button.textContent = stopped.has(video) ? '▶' : 'Ⅱ';
-      button.setAttribute('aria-label', (stopped.has(video) ? 'Воспроизвести видео: ' : 'Приостановить видео: ') + button.dataset.title);
-    }
-  }
-  const observer = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      const video = entry.target as HTMLVideoElement;
-      if (entry.isIntersecting) visible.add(video); else visible.delete(video);
-      update(video);
-    }
-  }, { threshold: 0.05 });
-  for (const video of videos) {
-    const button = video.closest('article')?.querySelector<HTMLButtonElement>('.project-card__playback');
-    video.addEventListener('playing', () => { video.classList.add('is-playing'); if (button) button.hidden = false; });
-    video.addEventListener('error', () => { video.classList.remove('is-playing'); if (button) button.hidden = true; });
-    button?.addEventListener('click', () => { if (stopped.has(video)) stopped.delete(video); else stopped.add(video); update(video); });
-    observer.observe(video);
-  }
-  motion.addEventListener('change', () => videos.forEach(update));
-  document.addEventListener('visibilitychange', () => videos.forEach(update));
+  import { createVideoPlayback } from '../lib/videoPlayback';
+  createVideoPlayback([...document.querySelectorAll<HTMLVideoElement>('.project-card__video')]);
 </script>
 <style>
   .project-card { position: relative; min-width: 0; scroll-margin-top: 50px; }
