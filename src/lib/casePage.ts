@@ -181,7 +181,7 @@ import { createSteppedScroll } from './steppedScroll';
       }
       const content = stageElements[index]?.querySelector<HTMLElement>('.case-stage__content');
       const triggerOffset = triggers[index]?.offsetTop ?? 0;
-      return window.innerHeight / 2 - (content?.offsetHeight ?? 0) / 2 + triggerOffset;
+      return Math.max(24, (window.innerHeight - (content?.offsetHeight ?? 0)) / 2) + triggerOffset;
     };
 
 
@@ -195,14 +195,16 @@ import { createSteppedScroll } from './steppedScroll';
       springDamping: 24,
       springTimeScale: 1,
       restPosition,
+      scrollRange: (index) => {
+        const stage = stageElements[index].getBoundingClientRect();
+        const start = window.scrollY + stage.top + triggers[index].offsetTop - restPosition(index);
+        const height = mobile.matches ? stage.height
+          : stageElements[index].querySelector<HTMLElement>('.case-stage__content')?.offsetHeight ?? stage.height;
+        return { start, end: Math.max(start, window.scrollY + stage.top + height - window.innerHeight + 24) };
+      },
       touch: {
         threshold: 80,
         axisThreshold: 8,
-        scrollRange: (index) => {
-          const stage = stageElements[index].getBoundingClientRect();
-          const start = window.scrollY + stage.top + triggers[index].offsetTop - restPosition(index);
-          return { start, end: Math.max(start, window.scrollY + stage.bottom - window.innerHeight + 24) };
-        },
       },
       onStep: setActiveIndex,
       onTension: renderTension,

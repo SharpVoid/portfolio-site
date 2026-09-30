@@ -149,7 +149,7 @@ try {
   await step(-1); await expect('about');
   await step(1); await expect('problem', true);
   assert.equal(await page.locator('.case-contact').evaluate(el => getComputedStyle(el).marginTop), '226.5px');
-  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '72px');
+  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '48px');
   for (const width of [800, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await pause(1200); // Mobile now restores its active anchor after resize.
@@ -169,7 +169,7 @@ try {
   assert.ok(await page.locator('video').evaluateAll(videos => videos.every(v => v.paused)), 'reduced motion disables autoplay');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(url);
-  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '150px');
+  assert.equal(await page.locator('.case-project-nav').evaluate(el => getComputedStyle(el).marginTop), '48px');
   await page.locator('.case-tags__toggle').click();
   assert.equal(await page.locator('.case-tags__toggle').getAttribute('aria-expanded'), 'true');
   for (const section of await page.locator('[data-case-stage]').all()) {

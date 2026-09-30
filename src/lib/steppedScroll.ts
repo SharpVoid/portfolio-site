@@ -10,6 +10,8 @@ export interface SteppedScrollOptions {
   onMeasure?: (index: number) => void;
   /** Desired viewport Y of each marker. */
   restPosition?: (index: number) => number;
+  /** Document scroll range for reading a tall step before changing steps. */
+  scrollRange?: (index: number) => { start: number; end: number };
   desktopQuery?: string;
   threshold?: number;
   maxEventDelta?: number;
@@ -22,8 +24,6 @@ export interface SteppedScrollOptions {
   touch?: {
     threshold?: number;
     axisThreshold?: number;
-    /** Document scroll range for reading a tall step before changing steps. */
-    scrollRange?: (index: number) => { start: number; end: number };
   };
 }
 
@@ -192,13 +192,14 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
 
   const restPosition = options.restPosition ?? (() => window.innerHeight * REST_LINE);
 
-  const springToActiveStage = (speed = 1) => {
+  const springToActiveStage = (speed = 1, fromBelow = false) => {
     const trigger = triggers[activeIndex];
     if (!trigger) return;
 
     const triggerDocumentY = window.scrollY + trigger.getBoundingClientRect().top;
     const maximumScroll = document.documentElement.scrollHeight - window.innerHeight;
-    const requested = clamp(triggerDocumentY - restPosition(activeIndex), 0, maximumScroll);
+    const requested = clamp(fromBelow && desktopQuery.matches ? readingRange(activeIndex).end
+      : triggerDocumentY - restPosition(activeIndex), 0, maximumScroll);
     startSpring('scroll', window.scrollY, requested, speed);
   };
 
@@ -271,7 +272,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     accumulatedDelta = 0;
     clearTension();
     setActiveIndex(activeIndex + direction);
-    springToActiveStage(speed);
+    springToActiveStage(speed, direction < 0);
   };
 
   const accumulate = (delta: number, threshold: number, speed = 1) => {
@@ -355,12 +356,30 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
         nativeWheelDirection = 0;
         lastWheelTime = now;
         armGestureEnd();
-        springToActiveStage(inputSpeed);
+        springToActiveStage(inputSpeed, direction < 0);
         return;
       }
       resetInteraction();
       lastWheelTime = now;
       nativeWheelDirection = direction;
+      return;
+    }
+    const range = readingRange(activeIndex);
+    const reading = range.end > range.start + 2
+      && (direction > 0 ? window.scrollY < range.end - 2 : window.scrollY > range.start + 2);
+    if (reading) {
+      event.preventDefault();
+      wheelOwnsState = true;
+      if (!continuesGesture) beginGesture();
+      lastWheelTime = now;
+      armGestureEnd();
+      accumulatedDelta = 0;
+      cancelAnimation();
+      clearTension();
+      const destination = clamp(window.scrollY + rawDelta, range.start, range.end);
+      instantScroll(destination);
+      // Consume the reading edge before a separate gesture can change step.
+      if (Math.abs(destination - (direction > 0 ? range.end : range.start)) < 2) committedInGesture = true;
       return;
     }
     if (isOutwardBoundary && accumulatedDelta === 0) {
@@ -379,9 +398,9 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     accumulate(delta, STEP_THRESHOLD, inputSpeed);
   };
 
-  const touchRange = (index: number) => {
+  const readingRange = (index: number) => {
     const start = window.scrollY + triggers[index].getBoundingClientRect().top - restPosition(index);
-    return options.touch?.scrollRange?.(index) ?? { start, end: start };
+    return options.scrollRange?.(index) ?? { start, end: start };
   };
   const instantScroll = (y: number) => {
     const behavior = document.documentElement.style.scrollBehavior;
@@ -415,8 +434,8 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     const horizontal = point.clientX - touchPoint.x;
     if (touchMode === 'pending') {
       if (Math.max(Math.abs(delta), Math.abs(horizontal)) < touchAxisThreshold) return;
-      const first = touchRange(0).start;
-      const last = touchRange(triggers.length - 1).end;
+      const first = readingRange(0).start;
+      const last = readingRange(triggers.length - 1).end;
       const outside = (window.scrollY < first - 2 && window.scrollY + delta < first)
         || (window.scrollY > last + 2 && window.scrollY + delta > last);
       const outward = (activeIndex === 0 && delta < 0 && window.scrollY <= first + 2)
@@ -445,7 +464,7 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     if (animationMode === 'scroll') {
       return;
     }
-    const range = touchRange(activeIndex);
+    const range = readingRange(activeIndex);
     // Let tall content be read, without allowing one fast swipe to cross it and another step.
     const reading = delta > 0 ? window.scrollY < range.end - 2 : window.scrollY > range.start + 2;
     if (reading) {
@@ -487,9 +506,9 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
     if (animationMode) return;
     if (desktopQuery.matches && moved && wheelOwnsState && !reducedMotionQuery.matches
       && lastWheelTime > 0 && performance.now() - lastWheelTime < 500) {
-      const trigger = triggers[activeIndex];
-      const target = clamp(window.scrollY + trigger.getBoundingClientRect().top
-        - restPosition(activeIndex), 0, document.documentElement.scrollHeight - window.innerHeight);
+      const range = readingRange(activeIndex);
+      const target = clamp(clamp(window.scrollY, range.start, range.end),
+        0, document.documentElement.scrollHeight - window.innerHeight);
       instantScroll(target);
       return;
     }
@@ -510,14 +529,14 @@ export function createSteppedScroll(options: SteppedScrollOptions) {
         nativeWheelDirection = 0;
         lastWheelTime = performance.now();
         armGestureEnd();
-        springToActiveStage();
+        springToActiveStage(1, enteringUp);
         return;
       }
     }
     // Catch native entry/inertia from outside before it can skip the first/last step.
     if (mobileEnabled() && nativeTouch && !reducedMotionQuery.matches && moved) {
-      const first = touchRange(0).start;
-      const last = touchRange(triggers.length - 1).end;
+      const first = readingRange(0).start;
+      const last = readingRange(triggers.length - 1).end;
       const enteringDown = previousY < first && window.scrollY >= first;
       const enteringUp = previousY > last && window.scrollY <= last;
       if (enteringDown || enteringUp) {
