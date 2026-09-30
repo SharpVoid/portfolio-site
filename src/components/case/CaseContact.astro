@@ -1,24 +1,24 @@
 ---
 import Footer from '../Footer.astro';
+import { projectTitles } from '../../data/projectTitles';
 interface Props { nextHref?: string; }
 const { nextHref = '/#projects' } = Astro.props;
+const nextTitle = projectTitles[nextHref];
 ---
 <section class="case-contact case-shell" id="contacts" aria-labelledby="contact-title">
       <div class="case-contact__pitch">
         <h2 id="contact-title">Есть задача или подходящая роль?</h2>
         <p>Буду рад обсудить продукт, команду или сотрудничество</p>
-        <a class="case-contact__button" href="https://t.me/sharpvoid">Связаться</a>
+        <div class="case-contact__actions">
+          <a class="case-contact__button" href="https://t.me/sharpvoid">Связаться</a>
+          <a class="case-contact__button case-contact__resume" href="/resume.pdf" download="Михаил Лисенко Продуктовый дизайнер Резюме.pdf" data-resume-download><span aria-live="polite">Резюме</span></a>
+        </div>
       </div>
       <nav class="case-project-nav" aria-label="Другие проекты">
         <a href="/#projects">← Все проекты</a>
-        <a href={nextHref}>Следующий кейс →</a>
+        <a href={nextHref}>Следующий кейс{nextTitle && <span class="case-project-nav__title">: {nextTitle}</span>} →</a>
       </nav>
       <div class="case-footer">
         <Footer />
-        <div class="case-footer__links">
-          <a href="/resume.pdf" download="Михаил Лисенко Продуктовый дизайнер Резюме.pdf" data-resume-download><span aria-live="polite">Резюме</span></a>
-          <a href="mailto:lisenkomike.v@gmail.com">lisenkomike.v@gmail.com</a>
-          <a href="https://t.me/sharpvoid">@sharpvoid</a>
-        </div>
       </div>
     </section>

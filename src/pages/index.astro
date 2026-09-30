@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Footer from '../components/Footer.astro';
 import Profile from '../components/Profile.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import { projectTitles } from '../data/projectTitles';
 import focusRectangle from '../assets/projects/focusml-cover-rectanlge.png';
 import focusSquare from '../assets/projects/focusml-cover-square.png';
 import bankDesktop from '../assets/projects/bank-desktop.png';
@@ -14,7 +15,7 @@ import atomMobile from '../assets/projects/atom-mobile.png';
 
 const projects = [
   {
-    id: 'focusml', video: '/videos/focusml.mp4', title: 'FocusML',
+    id: 'focusml', video: '/videos/focusml.mp4', title: projectTitles['/projects/focusml/'],
     description: 'Веб-инструмент разметки и обучения моделей машинного зрения',
     image: focusRectangle, mobileImage: focusSquare,
     alt: 'Интерфейс FocusML: разметка изображения арбузов с помощью текстового запроса',
@@ -26,20 +27,20 @@ const projects = [
     ],
   },
   {
-    id: 'doverie', video: '/videos/doverie.mp4', title: 'Банк «Доверие»',
+    id: 'doverie', video: '/videos/doverie.mp4', title: projectTitles['/projects/doverie/'],
     description: 'Мобильное банковское приложение с внедрением социальных функций',
     image: bankDesktop, mobileImage: bankMobile,
     alt: 'Главный экран банка «Доверие» на телефоне: баланс, карты и история операций',
     href: '/projects/doverie/',
   },
   {
-    id: 'design-arena', video: '/videos/design-arena.mp4', title: 'Дизайн-арена',
+    id: 'design-arena', video: '/videos/design-arena.mp4', title: projectTitles['/projects/design-arena/'],
     description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа внутри дизайн-сообщества',
     image: arenaDesktop, mobileImage: arenaMobile, secondary: true, href: '/projects/design-arena/',
     alt: 'Экран приложения на телефоне с кольцом дневной нормы калорий и показателями питания',
   },
   {
-    id: 'atomreport', video: '/videos/atomreport.mp4', title: 'ConsulAI',
+    id: 'atomreport', video: '/videos/atomreport.mp4', title: projectTitles['https://www.consulai.ru/'],
     description: 'Веб-сервис подготовки и согласования цифровой отчётности',
     image: atomDesktop, mobileImage: atomMobile, secondary: true, href: 'https://www.consulai.ru/',
     confirmNavigation: true,
