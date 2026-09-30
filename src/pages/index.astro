@@ -34,7 +34,7 @@ const projects = [
   },
   {
     id: 'design-arena', video: '/videos/design-arena.mp4', title: 'Дизайн-арена',
-    description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа',
+    description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа внутри дизайн-сообщества',
     image: arenaDesktop, mobileImage: arenaMobile, secondary: true, href: '/projects/design-arena/',
     alt: 'Экран приложения на телефоне с кольцом дневной нормы калорий и показателями питания',
   },
@@ -103,11 +103,24 @@ const projects = [
   .external-case-dialog button:active { filter: brightness(0.9); }
   .external-case-dialog button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
   @media (max-width: 600px) { .external-case-dialog { padding: 24px; border-radius: 20px; } }
-  .portfolio { display: grid; grid-template-columns: 419px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
+  .portfolio { --color-accent: #0053b2; --color-button: #0075e2; display: grid; grid-template-columns: 419px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
+  .portfolio :global(.site-footer) { color: var(--color-text-muted); }
+  .portfolio :global(.site-footer [data-resume-download]) { display: none; }
+  @media (min-width: 601px) {
+    .portfolio :global(.site-footer__links) { display: block; margin-top: 27px; }
+    .portfolio :global(.site-footer .contact-links) { justify-content: start; gap: 12px 43px; }
+  }
+  @media (min-width: 601px) and (max-width: 1024px) {
+    .portfolio :global(.site-footer) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 32px; }
+    .portfolio :global(.site-footer__links) { flex: none; max-width: none; margin-top: 0; }
+  }
+  @media (min-width: 1025px) {
+    .portfolio :global(.site-footer) { top: calc(100dvh - 50px - 66px); }
+  }
   .portfolio > :global(.profile) { grid-column: 1; grid-row: 1; }
-  @media (min-width: 1025px) and (max-height: 941px) {
+  @media (min-width: 1025px) and (max-height: 992px) {
     /* Leave 30px between the scrollable profile and the viewport-pinned footer. */
-    .portfolio > :global(.profile) { max-height: calc(100dvh - 149px); overflow-y: auto; }
+    .portfolio > :global(.profile) { max-height: calc(100dvh - 196px); overflow-y: auto; }
   }
   .projects { display: grid; gap: 48px; min-width: 0; scroll-margin-top: 50px; grid-column: 2; grid-row: 1; }
   @media (max-width: 1024px) {

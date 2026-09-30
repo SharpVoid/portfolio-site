@@ -1,9 +1,8 @@
 ---
 import { Picture } from 'astro:assets';
 import portrait from '../assets/profile/portrait.png';
-import ContactLinks from './ContactLinks.astro';
 interface Props { resumeHref?: string; }
-const { resumeHref } = Astro.props;
+const { resumeHref = '/resume.pdf' } = Astro.props;
 ---
 <section class="profile" aria-labelledby="page-title">
   <div class="profile__portrait">
@@ -17,13 +16,13 @@ const { resumeHref } = Astro.props;
       </div>
       <div class="profile__achievements">
         <h2>Достижения</h2>
-        <p>Дважды победил во всеросийском<span class="profile__achievement-break"><br /></span><span class="profile__achievement-space"> </span>хакатоне «Цифровой Прорыв» сезон ИИ»</p>
+        <p>Дважды победил во всероссийском<span class="profile__achievement-break"><br /></span><span class="profile__achievement-space"> </span>хакатоне «Цифровой Прорыв»: сезон ИИ</p>
       </div>
-      <p class="profile__experience">3+ года опыта<span class="profile__extended-role"> работы</span> · Техническое образование</p>
+      <p class="profile__experience">3+ года опыта работы \\ Техническое образование</p>
     </div>
     <div id="contacts" class="profile__contacts">
       <a class="profile__contact" href="https://t.me/sharpvoid">Связаться</a>
-      <div class="profile__links"><ContactLinks resumeHref={resumeHref} /></div>
+      <a class="profile__contact profile__resume" href={resumeHref} download="Михаил Лисенко Продуктовый дизайнер Резюме.pdf" data-resume-download><span aria-live="polite">Резюме</span></a>
     </div>
   </div>
 </section>
@@ -37,16 +36,21 @@ const { resumeHref } = Astro.props;
   .profile p, .profile h1, .profile h2 { margin: 0; }
   .profile__details { display: grid; gap: 32px; }
   .profile__about, .profile__achievements { display: grid; gap: 8px; }
-  h1 { color: var(--color-accent); font-size: 24px; font-weight: 500; line-height: 31px; }
+  h1 { color: #006dea; font-size: 24px; font-weight: 500; line-height: 31px; }
   h1 a { text-decoration: none; }
   .profile__details p { line-height: 21px; }
-  .profile__experience, h2 { color: var(--color-text-muted); }
+  .profile__experience { color: var(--color-text-muted); }
+  h2 { color: var(--color-accent); }
   .profile__achievements p { max-width: 690px; }
   h2 { font-size: 20px; font-weight: 500; line-height: 26px; }
-  .profile__contacts { display: grid; gap: 28px; margin-top: 28px; scroll-margin-top: 50px; }
+  .profile__contacts { display: grid; gap: 12px; margin-top: 28px; scroll-margin-top: 50px; }
   .profile__contact { position: relative; isolation: isolate; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 10px 20px; border-radius: 10px; background: var(--color-button); color: white; font-weight: 500; line-height: 20px; text-decoration: none; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1); }
   .profile__contact:active { background-color: #82bbfb; transform: scale(1.1); transition-duration: 140ms; }
+  .profile__contact.profile__resume { background: white; color: var(--color-accent); font-family: var(--font-sans); font-weight: 400; line-height: 20px; }
+  @media (hover: hover) { .profile__resume:hover { background-color: #edf4fb; } }
+  .profile__contact.profile__resume:active { background-color: #d0e6fa; }
   .profile__contact::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 24%) 50%, transparent 70%); transform: translateX(-100%); }
+  .profile__resume::before { display: none; }
   @media (hover: hover) and (prefers-reduced-motion: no-preference) {
     .profile__contact:hover::before { animation: profile-button-shimmer 850ms ease-out forwards; }
   }
@@ -63,7 +67,7 @@ const { resumeHref } = Astro.props;
     .profile__intro-break { display: none; }
     .profile__intro-space { display: inline; }
     .profile__contact { font-family: var(--font-ui); line-height: 19px; }
-    .profile__extended-role, .profile__links, .profile__achievement-break { display: none; }
+    .profile__extended-role, .profile__achievement-break { display: none; }
     .profile__achievement-space { display: inline; }
   }
   @media (max-width: 600px) {
