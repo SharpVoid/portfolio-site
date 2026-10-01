@@ -15,7 +15,7 @@
 | `types.ts` | Типы CaseData, CaseStage, CaseMediaData |
 | `src/styles/case.css` | Единственная копия CSS кейсов: сетка, типографика, ритм, media, tags, dialog, адаптив и анимации |
 | `src/lib/casePage.ts` | Общая презентационная логика: active classes, tension, центры, интервалы, видео, теги и modal |
-| `src/lib/steppedScroll.ts` | Прежний core wheel/touch; в этом рефакторинге не изменён |
+| `src/lib/scrollScene.ts` | Native scroll → progress → визуальное состояние; не управляет прокруткой |
 | `src/data/cases/doverie.ts` | Только контент и особенности медиа Doverie |
 | `src/pages/projects/doverie.astro` | Композиция страницы: layout → hero → stepped section |
 
@@ -113,7 +113,7 @@ Astro-разметкой или своим компонентом в slot CaseLa
 
 Не требуется CaseSection с десятками вариантов: пока у уникальных секций нет
 реально повторяющейся структуры. Hero можно заменить своим блоком в slot.
-Stepped section необязательна; **не больше одной на странице** — core владеет window scroll.
+Scroll section необязательна; **не больше одной на странице** — casePage связывает один набор текстов и медиа.
 Не вставлять уникальные DOM-узлы внутрь `.case-story__copy`: индексы текста,
 triggers и desktop visuals должны совпадать. Для нового scroll-шага добавить
 объект в stages; удаление и перестановка также делаются в этом массиве.
@@ -121,11 +121,10 @@ triggers и desktop visuals должны совпадать. Для нового
 ## Что намеренно сохранено
 
 - Breakpoint’ы 1680 / 1100 / 900 / 600px и отдельные стили Footer.
-- Весь алгоритм steppedScroll, threshold, spring, tension, cooldown и native fallback.
+- Sticky-медиа, active/preview-состояния и CSS transitions. С 1 октября 2026 scroll нативный; spring, threshold и блокировки жестов удалены.
 - Две media-проекции одного массива для desktop/mobile. Не объединять их молча:
   они обеспечивают разную раскладку и управление активным видео.
-- Расчёт видимых интервалов через высоту первого текста и scale 0.6667.
-  Это непривычная, но рабочая часть визуального ритма; подробности в scroll-mechanics.md.
+- Начальный отступ через высоту первого текста и scale 0.6667. Отступы больше не зависят от активного шага; подробности в scroll-mechanics.md.
 - Первое desktop-видео и текст центрируются, верхний padding измеряется.
 - Один общий клиентский модуль на страницу. Проект сейчас использует обычные
   переходы, без ClientRouter; при добавлении ClientRouter нужна отдельная проверка
@@ -133,9 +132,9 @@ triggers и desktop visuals должны совпадать. Для нового
 
 ## Проверка и восстановление
 
-`npm run build` и существующие `scripts/check-stepped-scroll.mjs`,
-`check-stepped-touch.mjs`, `check-image-dialog.mjs` проверяют Doverie.
-Эти проверки содержат его ID/контент; для нового кейса не переименовывать их ожидания.
+`npm run build`, `node scripts/check-native-scroll.mjs` и
+`node scripts/check-image-dialog.mjs` проверяют сборку, native scroll и просмотр медиа.
+Scroll-проверка охватывает FocusML, Doverie и Arena.
 Параметры runtime Playwright описаны в scroll-mechanics.md.
 
 `node scripts/check-case-template.mjs --capture` сохраняет эталон ДО изменения;
@@ -147,5 +146,5 @@ hero и пять шагов, ширины 1440, 1920, 800, 390px, высота 9
 Для долгого хранения baseline выбрать постоянную папку и сохранить её отдельно.
 
 Для переноса системы нужны `components/case/`, `lib/casePage.ts`,
-`lib/steppedScroll.ts`, `styles/case.css`, BaseLayout/Footer и шрифты/tokens,
+`lib/scrollScene.ts`, `styles/case.css`, BaseLayout/Footer и шрифты/tokens,
 данные кейса и его ресурсы. Scroll core отдельно от Astro переносится как прежде.

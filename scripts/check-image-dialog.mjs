@@ -16,7 +16,8 @@ try {
       await page.evaluate(id => {
         document.documentElement.style.scrollBehavior = 'auto';
         const stage = document.querySelector(`[data-case-stage="${id}"]`);
-        scrollTo(0, scrollY + stage.getBoundingClientRect().top - 24);
+        const height = innerWidth > 900 ? stage.querySelector('.case-stage__content').offsetHeight : stage.offsetHeight;
+        scrollTo(0, scrollY + stage.getBoundingClientRect().top - Math.max(24, (innerHeight - height) / 2));
       }, id);
       await page.waitForTimeout(500);
       const image = page.locator(width === 390 ? `[data-stage-image="${id}"] img` : `[data-case-visual="${id}"] img`);
@@ -47,7 +48,7 @@ try {
       await page.mouse.click(2, 2);
       assert.equal(await dialog.evaluate(el => el.open), false);
       assert.equal(await page.evaluate(() => document.documentElement.style.overflow), '');
-      await page.waitForTimeout(1200); // Desktop resumes the active step's centering spring.
+      await page.waitForTimeout(100); // Closing preserves native scroll position.
     }
     assert.deepEqual(errors, []);
     await page.close();

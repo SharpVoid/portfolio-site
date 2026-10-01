@@ -1,6 +1,5 @@
-import { createSteppedScroll } from './steppedScroll';
+import { createScrollScene } from './scrollScene';
 import { createVideoPlayback } from './videoPlayback';
-  const REST_LINE = 0.38;
   const MAX_TENSION_PX = 14;
   const story = document.querySelector<HTMLElement>('[data-case-story]');
   const stageElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-stage]'));
@@ -8,7 +7,7 @@ import { createVideoPlayback } from './videoPlayback';
     .map((stage) => stage.querySelector<HTMLElement>('[data-case-trigger]'))
     .filter((trigger): trigger is HTMLElement => Boolean(trigger));
   const visualElements = Array.from(document.querySelectorAll<HTMLElement>('[data-case-visual]'));
-  let scrollController: ReturnType<typeof createSteppedScroll> | undefined;
+  let scrollController: ReturnType<typeof createScrollScene> | undefined;
   const imageDialog = document.querySelector<HTMLDialogElement>('.case-image-dialog')!;
   const dialogImage = imageDialog.querySelector<HTMLImageElement>('img')!;
   let previewTrigger: HTMLImageElement | null = null;
@@ -18,7 +17,6 @@ import { createVideoPlayback } from './videoPlayback';
     previewTrigger = image;
     dialogImage.src = image.dataset.imagePreview!;
     dialogImage.alt = image.alt;
-    scrollController?.suspend();
     previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
     imageDialog.showModal();
@@ -44,7 +42,7 @@ import { createVideoPlayback } from './videoPlayback';
   });
   imageDialog.addEventListener('close', () => {
     document.documentElement.style.overflow = previousOverflow;
-    scrollController?.resume();
+    scrollController?.refresh();
     syncVideos();
     previewTrigger?.focus({ preventScroll: true });
   });
@@ -59,6 +57,7 @@ import { createVideoPlayback } from './videoPlayback';
       && !imageDialog.open,
   );
   const mobile = window.matchMedia('(max-width: 900px)');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   const tags = document.querySelector<HTMLElement>('[data-tags]');
   const toggle = tags?.querySelector<HTMLButtonElement>('button');
@@ -72,7 +71,6 @@ import { createVideoPlayback } from './videoPlayback';
 
   if (story && triggers.length === stageElements.length && triggers.length > 0) {
     let activeIndex = 0;
-    let tensionValue = 0;
     const clamp = (value: number, min: number, max: number) =>
       Math.min(max, Math.max(min, value));
     const updateStageSpacing = () => {
@@ -80,10 +78,8 @@ import { createVideoPlayback } from './videoPlayback';
         stage.querySelector<HTMLElement>('.case-stage__content')?.offsetHeight ?? 0);
       const extra = heights[0] * (1 - 0.6667);
       stageElements.forEach((stage, index) => {
-        // Match Problem's visible gaps, including space hidden by the preceding scale.
-        const gap = activeIndex === 0 ? (index === 1 ? extra : 0)
-          : index === activeIndex ? extra
-          : index === activeIndex - 1 ? extra - heights[index] * (1 - 0.6667) : 0;
+        // Keep the initial composition without moving markers when the active step changes.
+        const gap = index === 1 ? extra : 0;
         stage.style.setProperty('--case-stage-extra-gap', `${gap}px`);
       });
     };
@@ -91,7 +87,6 @@ import { createVideoPlayback } from './videoPlayback';
       const boundedIndex = clamp(nextIndex, 0, stageElements.length - 1);
       if (boundedIndex === activeIndex) return;
       activeIndex = boundedIndex;
-      updateStageSpacing();
 
       stageElements.forEach((stage, index) => {
         stage.classList.toggle('is-active', index === activeIndex);
@@ -119,10 +114,9 @@ import { createVideoPlayback } from './videoPlayback';
     const renderTension = (value: number) => {
       if (!story) return;
 
-      tensionValue = clamp(value, -1, 1);
-      // Slow initial motion, with stronger resistance near the detent.
-      const progress = Math.pow(Math.abs(tensionValue), 1.35);
-      const direction = Math.sign(tensionValue);
+      // Preserve the existing pull/preview effect, now derived from scroll position.
+      const progress = Math.pow(Math.abs(clamp(value, -1, 1)), 1.35);
+      const direction = Math.sign(value);
 
       story.classList.toggle('is-tensioning', progress > 0.001);
       story.style.setProperty('--case-active-translate-y', `${-direction * progress * MAX_TENSION_PX}px`);
@@ -138,17 +132,6 @@ import { createVideoPlayback } from './videoPlayback';
       }
     };
 
-    const clearTension = () => {
-      if (!story) return;
-
-      tensionValue = 0;
-      story.classList.remove('is-tensioning');
-      story.style.removeProperty('--case-active-translate-y');
-      story.style.removeProperty('--case-active-scale');
-      story.style.removeProperty('--case-active-opacity');
-      clearPreview();
-    };
-
     const restPosition = (index: number) => {
       if (mobile.matches) {
         // Tall video steps start at the top; smaller text/media pairs center together.
@@ -161,16 +144,9 @@ import { createVideoPlayback } from './videoPlayback';
     };
 
 
-    const controller = createSteppedScroll({
+    const controller = createScrollScene({
       container: story,
       triggers,
-      restLine: REST_LINE,
-      threshold: 90,
-      maxEventDelta: 90,
-      springStiffness: 220,
-      springDamping: 24,
-      springTimeScale: 1,
-      restPosition,
       scrollRange: (index) => {
         const stage = stageElements[index].getBoundingClientRect();
         const start = window.scrollY + stage.top + triggers[index].offsetTop - restPosition(index);
@@ -178,13 +154,11 @@ import { createVideoPlayback } from './videoPlayback';
           : stageElements[index].querySelector<HTMLElement>('.case-stage__content')?.offsetHeight ?? stage.height;
         return { start, end: Math.max(start, window.scrollY + stage.top + height - window.innerHeight + 24) };
       },
-      touch: {
-        threshold: 80,
-        axisThreshold: 8,
+      onProgress: (index, offset, progress) => {
+        setActiveIndex(index);
+        story.style.setProperty('--case-scroll-progress', String(progress));
+        renderTension(mobile.matches || reducedMotion.matches ? 0 : offset);
       },
-      onStep: setActiveIndex,
-      onTension: renderTension,
-      onClearTension: clearTension,
       onMeasure: () => {
         const visual = story.querySelector<HTMLElement>('.case-story__visual');
         const visualHeight = visual?.offsetHeight ?? 577;
@@ -194,6 +168,9 @@ import { createVideoPlayback } from './videoPlayback';
         story.style.setProperty('--case-last-visual-space', `${(visualHeight + (lastContent?.offsetHeight ?? 0)) / 2}px`);
 
         updateStageSpacing();
+        stageElements.forEach((stage, index) => {
+          stage.style.setProperty('--case-rest-top', `${restPosition(index) - triggers[index].offsetTop}px`);
+        });
 
       },
     });

@@ -3,7 +3,7 @@ import CaseMedia from './CaseMedia.astro';
 import type { CaseStage } from './types';
 interface Props { stages: CaseStage[]; }
 const { stages } = Astro.props;
-// One window-scroll story per page; IDs must be stable and unique.
+// One native-scroll story per page; IDs must be stable and unique.
 if (!stages.length || new Set(stages.map(stage => stage.id)).size !== stages.length) {
   throw new Error('CaseSteppedScroll requires at least one stage and unique stage IDs');
 }
@@ -12,6 +12,7 @@ if (!stages.length || new Set(stages.map(stage => stage.id)).size !== stages.len
       <div class="case-story__copy">
         {stages.map((stage, index) => (
           <article
+            id={stage.id}
             class:list={['case-stage', { 'is-active': index === 0 }]}
             data-case-stage={stage.id}
             data-mobile-align={stage.mobileAlign}

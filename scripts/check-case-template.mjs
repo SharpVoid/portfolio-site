@@ -25,11 +25,10 @@ try {
       if (position === 'about') {
         await page.evaluate(() => scrollTo(0, scrollY + document.querySelector('[data-case-story]').getBoundingClientRect().top - 300));
       } else if (position !== 'hero') {
-        if (width > 900) {
-          await page.mouse.wheel(0, 60); await page.waitForTimeout(30); await page.mouse.wheel(0, 60);
-        } else {
-          await page.locator(`[data-case-stage="${position}"]`).evaluate(el => scrollTo(0, scrollY + el.getBoundingClientRect().top - 24));
-        }
+        await page.locator(`[data-case-stage="${position}"]`).evaluate(el => {
+          const height = innerWidth > 900 ? el.querySelector('.case-stage__content').offsetHeight : el.offsetHeight;
+          scrollTo(0, scrollY + el.getBoundingClientRect().top - Math.max(24, (innerHeight - height) / 2));
+        });
       }
       await page.waitForTimeout(1300);
       const geometry = await page.locator('.case-page').evaluate(root => [...root.querySelectorAll('*')].map(el => {
