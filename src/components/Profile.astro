@@ -6,7 +6,7 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
 ---
 <section class="profile" aria-labelledby="page-title">
   <div class="profile__portrait">
-    <Picture src={portrait} formats={['avif', 'webp']} widths={[420, 840]} sizes="(max-width: 900px) 354px, 420px" alt="Михаил Лисенко" loading="eager" />
+    <Picture src={portrait} formats={['avif', 'webp']} widths={[840]} quality={75} sizes="(max-width: 900px) 354px, 420px" alt="Михаил Лисенко" loading="eager" />
   </div>
   <div class="profile__body">
     <div class="profile__details">
