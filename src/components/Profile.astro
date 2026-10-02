@@ -1,12 +1,12 @@
 ---
 import { Picture } from 'astro:assets';
-import portrait from '../assets/profile/portrait.webp';
+import portrait from '../assets/profile/portrait-2026.png';
 interface Props { resumeHref?: string; }
 const { resumeHref = '/resume.pdf' } = Astro.props;
 ---
 <section class="profile" aria-labelledby="page-title">
   <div class="profile__portrait">
-    <Picture src={portrait} formats={['avif', 'webp']} widths={[840]} quality={75} sizes="(max-width: 900px) 354px, 420px" alt="Михаил Лисенко" loading="eager" />
+    <Picture src={portrait} formats={['avif', 'webp']} widths={[840]} quality={75} sizes="(max-width: 1024px) 334px, 395px" alt="Михаил Лисенко" loading="eager" />
   </div>
   <div class="profile__body">
     <div class="profile__details">
@@ -18,7 +18,6 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
         <h2>Достижения</h2>
         <p>Дважды победил во всероссийском<span class="profile__achievement-break"><br /></span><span class="profile__achievement-space"> </span>хакатоне «Цифровой Прорыв»: сезон ИИ</p>
       </div>
-      <p class="profile__experience">3+ года опыта работы \\ Техническое образование</p>
     </div>
     <div id="contacts" class="profile__contacts">
       <a class="profile__contact" href="https://t.me/sharpvoid">Связаться</a>
@@ -27,26 +26,25 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
   </div>
 </section>
 <style>
-  .profile { position: sticky; top: 50px; align-self: start; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
-  .profile__portrait { width: 420px; max-width: 100%; aspect-ratio: 420 / 385; position: relative; }
+  .profile { position: sticky; top: 50px; align-self: start; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .profile__portrait { width: 395px; max-width: 100%; aspect-ratio: 420 / 385; position: relative; overflow: hidden; }
   .profile__portrait :global(picture) { position: absolute; inset: 0; display: block; }
-  .profile__portrait :global(img) { width: 100%; height: 100%; object-fit: cover; }
+  .profile__portrait :global(img) { width: 100%; height: auto; }
   .profile__portrait::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 74.026%, white 97.662%); pointer-events: none; }
   .profile__body { min-width: 0; }
   .profile p, .profile h1, .profile h2 { margin: 0; }
   .profile__details { display: grid; gap: 32px; }
   .profile__about, .profile__achievements { display: grid; gap: 8px; }
-  h1 { color: var(--color-accent); font-size: 24px; font-weight: 500; line-height: 31px; }
+  h1 { color: var(--color-accent); font-size: 20px; font-weight: 500; line-height: 26px; }
   h1 a { text-decoration: none; }
   .profile__details p { line-height: 21px; }
-  .profile__experience { color: var(--color-text-muted); }
-  h2 { color: var(--color-accent); }
+  h2 { color: var(--color-text-muted); }
   .profile__achievements p { max-width: 690px; }
   h2 { font-size: 20px; font-weight: 500; line-height: 26px; }
-  .profile__contacts { display: grid; gap: 12px; margin-top: 28px; scroll-margin-top: 50px; }
-  .profile__contact { position: relative; isolation: isolate; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 10px 20px; border-radius: 10px; background: var(--color-button); color: white; font-weight: 500; line-height: 20px; text-decoration: none; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .profile__contacts { display: grid; gap: 8px; margin-top: 32px; scroll-margin-top: 50px; }
+  .profile__contact { position: relative; isolation: isolate; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 10px 20px; border-radius: 10px; background: var(--color-button); color: white; font-weight: 600; line-height: 20px; text-decoration: none; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background-color 220ms cubic-bezier(0.22, 1, 0.36, 1); }
   .profile__contact:active { background-color: #82bbfb; transform: scale(1.1); transition-duration: 140ms; }
-  .profile__contact.profile__resume { background: white; color: var(--color-accent); font-family: var(--font-sans); font-weight: 400; line-height: 20px; }
+  .profile__contact.profile__resume { background: white; color: var(--color-accent); font-family: var(--font-sans); font-weight: 500; line-height: 20px; }
   @media (hover: hover) { .profile__resume:hover { background-color: #edf4fb; } }
   .profile__contact.profile__resume:active { background-color: #d0e6fa; }
   .profile__contact::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 24%) 50%, transparent 70%); transform: translateX(-100%); }
@@ -60,24 +58,26 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
     .profile__contact:active { transform: none; }
   }
   .profile__achievement-space, .profile__intro-space { display: none; }
-  @media (max-width: 1024px) { .profile__extended-role { display: none; } .profile { position: static; grid-template-columns: 420px minmax(0, 1fr); gap: clamp(28px, calc(82.1138vw - 739.845px), 101px); } }
-  @media (max-width: 900px) {
-    .profile { grid-template-columns: minmax(0, 1fr); gap: 80px; }
-    .profile__portrait { width: 354px; aspect-ratio: 354 / 325; justify-self: center; }
+  @media (max-width: 1024px) {
+    .profile { position: static; grid-template-columns: 334px minmax(0, 1fr); gap: clamp(32px, calc(26.953125vw - 175px), 101px); }
+    .profile__portrait { width: 334px; aspect-ratio: 334 / 306; }
+    .profile__details { gap: 24px; }
+    .profile__contacts { margin-top: 28px; }
     .profile__intro-break { display: none; }
     .profile__intro-space { display: inline; }
-    .profile__contact { font-family: var(--font-ui); line-height: 19px; }
+    .profile__contact { padding-block: 12px; font-weight: 500; }
+    .profile__contact.profile__resume { padding-block: 10px; }
     .profile__extended-role, .profile__achievement-break { display: none; }
     .profile__achievement-space { display: inline; }
   }
   @media (max-width: 600px) {
-    .profile { gap: 52px; }
-    .profile__portrait { justify-self: start; }
-    .profile__contact { font-family: var(--font-sans); line-height: 20px; }
+    .profile { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+    .profile__portrait { justify-self: center; }
+    .profile__contacts { margin-top: 32px; }
     .profile__intro-break { display: inline; }
     .profile__intro-space { display: none; }
-    h1 { font-size: 28px; line-height: 36px; }
     .profile__achievement-break { display: inline; }
     .profile__achievement-space { display: none; }
+    h1 { font-size: 24px; line-height: 31px; }
   }
 </style>

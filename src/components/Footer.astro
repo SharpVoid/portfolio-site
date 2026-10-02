@@ -1,9 +1,11 @@
 ---
 import ContactLinks from './ContactLinks.astro';
+interface Props { home?: boolean; }
+const { home = false } = Astro.props;
 ---
 <footer class="site-footer">
   <p>Москва, Россия · GMT/UTC+3<span data-moscow-clock hidden> · <time></time></span></p>
-  <div class="site-footer__links"><ContactLinks /></div>
+  <div class="site-footer__links"><ContactLinks wideTelegramLabel={home} /></div>
 </footer>
 
 <script>

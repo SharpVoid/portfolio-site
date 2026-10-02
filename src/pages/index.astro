@@ -4,14 +4,11 @@ import Footer from '../components/Footer.astro';
 import Profile from '../components/Profile.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import { projectTitles } from '../data/projectTitles';
-import focusRectangle from '../assets/projects/focusml-cover-rectanlge.webp';
-import focusSquare from '../assets/projects/focusml-cover-square.webp';
-import bankDesktop from '../assets/projects/bank-desktop.webp';
+import focusRectangle from '../assets/projects/focusml-cover-wide-2026.png';
+import focusSquare from '../assets/projects/focusml-cover-narrow-2026.png';
 import bankMobile from '../assets/projects/bank-mobile.webp';
 import arenaDesktop from '../assets/projects/arena-desktop.webp';
-import arenaMobile from '../assets/projects/arena-mobile.webp';
 import atomDesktop from '../assets/projects/atom-desktop.webp';
-import atomMobile from '../assets/projects/atom-mobile.webp';
 
 const projects = [
   {
@@ -23,26 +20,26 @@ const projects = [
     priority: true,
     variants: [
       { image: focusSquare, media: '(min-width: 601px) and (max-width: 900px)' },
-      { image: focusSquare, media: '(min-width: 1025px) and (max-width: 1679px)' },
     ],
   },
   {
     id: 'doverie', video: '/videos/doverie.mp4', title: projectTitles['/projects/doverie/'],
     description: 'Мобильное банковское приложение с внедрением социальных функций',
-    image: bankDesktop, mobileImage: bankMobile,
+    image: bankMobile, mobileImage: bankMobile,
     alt: 'Главный экран банка «Доверие» на телефоне: баланс, карты и история операций',
     href: '/projects/doverie/',
   },
   {
     id: 'design-arena', video: '/videos/design-arena.mp4', title: projectTitles['/projects/design-arena/'],
     description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа внутри дизайн-сообщества',
-    image: arenaDesktop, mobileImage: arenaMobile, secondary: true, href: '/projects/design-arena/',
+    image: arenaDesktop, mobileImage: arenaDesktop, secondary: true, href: '/projects/design-arena/',
+    mobileDescription: 'Мобильное приложение для отслеживания калорий за день',
     alt: 'Экран приложения на телефоне с кольцом дневной нормы калорий и показателями питания',
   },
   {
     id: 'atomreport', video: '/videos/atomreport.mp4', title: projectTitles['https://www.consulai.ru/'],
     description: 'Веб-сервис подготовки и согласования цифровой отчётности',
-    image: atomDesktop, mobileImage: atomMobile, secondary: true, href: 'https://www.consulai.ru/',
+    image: atomDesktop, mobileImage: atomDesktop, secondary: true, href: 'https://www.consulai.ru/',
     confirmNavigation: true,
     alt: 'Светящиеся цифровые документы и курсор на обложке ConsulAI',
   },
@@ -54,7 +51,7 @@ const projects = [
     <section id="projects" class="projects" aria-label="Проекты">
       {projects.map((project) => <ProjectCard {...project} />)}
     </section>
-    <Footer />
+    <Footer home />
   </main>
   <dialog id="external-case-dialog" class="external-case-dialog" aria-labelledby="external-case-message">
     <p id="external-case-message">Для просмотра кейса вы переходите на отдельный сайт</p>
@@ -104,16 +101,17 @@ const projects = [
   .external-case-dialog button:active { filter: brightness(0.9); }
   .external-case-dialog button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
   @media (max-width: 600px) { .external-case-dialog { padding: 24px; border-radius: 20px; } }
-  .portfolio { --color-accent: #0053b2; --color-button: #0075e2; display: grid; grid-template-columns: 419px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
+  .portfolio { --color-accent: #0053b2; --color-button: #0075e2; --page-padding: clamp(30px, calc(31.25vw - 290px), 160px); display: grid; grid-template-columns: 395px minmax(0, 1fr); column-gap: 80px; padding-block: 50px; }
   .portfolio :global(.site-footer) { color: var(--color-text-muted); }
   .portfolio :global(.site-footer [data-resume-download]) { display: none; }
-  @media (min-width: 601px) {
+  @media (min-width: 1025px) {
     .portfolio :global(.site-footer__links) { display: block; margin-top: 27px; }
     .portfolio :global(.site-footer .contact-links) { justify-content: start; gap: 12px 43px; }
   }
-  @media (min-width: 601px) and (max-width: 1024px) {
-    .portfolio :global(.site-footer) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 28px 32px; }
-    .portfolio :global(.site-footer__links) { flex: none; max-width: none; margin-top: 0; }
+  @media (max-width: 1024px) {
+    .portfolio :global(.site-footer) { display: block; text-align: center; color: #747474; }
+    .portfolio :global(.site-footer__links) { display: block; max-width: none; margin-top: 28px; }
+    .portfolio :global(.site-footer .contact-links) { flex-direction: column; align-items: center; gap: 28px; }
   }
   @media (min-width: 1025px) {
     .portfolio :global(.site-footer) { top: calc(100dvh - 50px - 66px); }
@@ -125,8 +123,12 @@ const projects = [
   }
   .projects { display: grid; gap: 48px; min-width: 0; scroll-margin-top: 50px; grid-column: 2; grid-row: 1; }
   @media (max-width: 1024px) {
-    .portfolio { grid-template-columns: minmax(0, 1fr); }
+    .portfolio { --page-padding: 30px; grid-template-columns: minmax(0, 1fr); }
     .projects { grid-column: 1; grid-row: auto; margin-top: 80px; }
+  }
+  @media (max-width: 600px) {
+    .portfolio { --page-padding: 16px; --cover-height: clamp(400px, calc(46.56085vw + 302.4127px), 660px); padding-top: 20px; }
+    .projects { gap: 52px; }
   }
 
 </style>

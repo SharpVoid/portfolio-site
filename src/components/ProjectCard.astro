@@ -5,6 +5,7 @@ interface Props {
   id: string;
   title: string;
   description: string;
+  mobileDescription?: string;
   image: ImageMetadata;
   mobileImage: ImageMetadata;
   alt: string;
@@ -16,7 +17,7 @@ interface Props {
   confirmNavigation?: boolean;
   variants?: { image: ImageMetadata; media: string }[];
 }
-const { id, title, description, image, mobileImage, alt, href, video, webm, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
+const { id, title, description, mobileDescription, image, mobileImage, alt, href, video, webm, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
 const crops = [{ image: mobileImage, media: '(max-width: 600px)' }, ...variants, { image, media: undefined }];
 const sources = await Promise.all(crops.map(async (crop) => {
   // Keep enough source pixels for tall covers at 2x without shipping the 4K original.
@@ -49,7 +50,7 @@ const Card = href ? 'a' : 'div';
     </div>
     <div class="project-card__content">
       <h2 id={`${id}-title`}>{title}</h2>
-      <p>{description}</p>
+      {mobileDescription ? <><p class="project-card__description--desktop">{description}</p><p class="project-card__description--mobile">{mobileDescription}</p></> : <p>{description}</p>}
     </div>
   </Card>
   {video && <button class="project-card__playback" type="button" hidden aria-label={`Приостановить видео: ${title}`} data-title={title}>Ⅱ</button>}
@@ -62,6 +63,8 @@ const Card = href ? 'a' : 'div';
   .project-card { position: relative; min-width: 0; scroll-margin-top: 50px; }
   .project-card__link { display: grid; gap: 18px; color: inherit; text-decoration: none; }
   .project-card__media { position: relative; display: block; height: var(--cover-height); overflow: hidden; border-radius: 30px; }
+  .project-card:not(.project-card--secondary) .project-card__media { height: 654px; }
+  .project-card--secondary .project-card__media { border-radius: 15px; }
   .project-card__media picture { display: block; width: 100%; height: 100%; }
   .project-card__media img { width: 100%; height: 100%; object-fit: cover; }
   .project-card__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; }
@@ -70,26 +73,21 @@ const Card = href ? 'a' : 'div';
   .project-card:hover .project-card__playback, .project-card__playback:focus-visible { opacity: 1; }
   @media (hover: none) { .project-card__playback { opacity: 1; } }
   @media (min-width: 601px) and (max-width: 900px), (min-width: 1025px) and (max-width: 1679px) { #focusml .project-card__video { object-position: 10% center; } }
+  @media (min-width: 1025px) and (max-width: 1679px) { #focusml .project-card__media img { object-position: 21.89% center; } }
   @media (max-width: 600px) { #focusml .project-card__video { object-position: 42% center; } }
   .project-card__content { display: grid; gap: 6px; }
   h2, p { margin: 0; font-size: 16px; line-height: 20px; }
-  h2 { position: relative; justify-self: start; color: var(--color-accent); font-weight: 600; }
+  h2 { position: relative; justify-self: start; color: var(--color-accent); font-size: 20px; line-height: 26px; font-weight: 600; }
+  .project-card__description--mobile { display: none; }
   h2::after { content: ''; position: absolute; inset-inline: 0; bottom: -2px; height: 2px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 250ms ease; }
   .project-card:hover h2::after, .project-card__link:focus-visible h2::after { transform: scaleX(1); }
   @media (prefers-reduced-motion: reduce) { h2::after { transition: none; } }
   .project-card--secondary .project-card__media {
     box-shadow: 217px 137px 103px rgb(179 203 234 / 1%), 122px 77px 87px rgb(179 203 234 / 5%), 54px 34px 64px rgb(179 203 234 / 9%), 14px 9px 35px rgb(179 203 234 / 10%);
   }
-  @media (max-width: 1024px) {
-    .project-card__media { border-radius: 15px; }
-  }
-  @media (min-width: 1680px) {
-    h2 { font-size: 20px; line-height: 26px; }
-    .project-card:not(.project-card--secondary) .project-card__media { height: 654px; }
-  }
   @media (max-width: 600px) {
-    h2 { font-size: 20px; line-height: 26px; }
-    p { text-wrap: balance; }
-    .project-card--secondary .project-card__media { box-shadow: none; }
+    .project-card__media, .project-card:not(.project-card--secondary) .project-card__media { height: var(--cover-height); border-radius: 15px; }
+    .project-card__description--desktop { display: none; }
+    .project-card__description--mobile { display: block; }
   }
 </style>
