@@ -10,6 +10,36 @@ import { createVideoPlayback } from './videoPlayback';
   let scrollController: ReturnType<typeof createScrollScene> | undefined;
   const imageDialog = document.querySelector<HTMLDialogElement>('.case-image-dialog')!;
   const dialogImage = imageDialog.querySelector<HTMLImageElement>('img')!;
+  const imageViewport = imageDialog.querySelector<HTMLElement>('.case-image-dialog__viewport')!;
+  const zoomButtons = [...imageDialog.querySelectorAll<HTMLButtonElement>('[data-image-zoom]')];
+  const mobilePreview = window.matchMedia('(max-width: 900px)');
+  let imageZoom = 1;
+  const fitPreview = (width: number, height: number) => {
+    if (!mobilePreview.matches || !width || !height) return;
+    const fit = Math.min(1, (window.innerWidth - 32) / width, (window.innerHeight - 32) / height);
+    imageDialog.style.setProperty('--preview-width', `${width * fit}px`);
+    imageDialog.style.setProperty('--preview-height', `${height * fit}px`);
+    imageDialog.style.setProperty('--preview-zoom', '1');
+    imageZoom = 1;
+    imageViewport.scrollTo(0, 0);
+    zoomButtons[0].disabled = false;
+    zoomButtons[1].disabled = true;
+  };
+  dialogImage.addEventListener('load', () => fitPreview(dialogImage.naturalWidth, dialogImage.naturalHeight));
+  window.addEventListener('resize', () => {
+    if (imageDialog.open) fitPreview(dialogImage.naturalWidth, dialogImage.naturalHeight);
+  });
+  zoomButtons.forEach(button => button.addEventListener('click', () => {
+    const nextZoom = Math.min(4, Math.max(1, imageZoom + Number(button.dataset.imageZoom)));
+    const ratio = nextZoom / imageZoom;
+    const centerX = (imageViewport.scrollLeft + imageViewport.clientWidth / 2) * ratio;
+    const centerY = (imageViewport.scrollTop + imageViewport.clientHeight / 2) * ratio;
+    imageZoom = nextZoom;
+    imageDialog.style.setProperty('--preview-zoom', String(imageZoom));
+    imageViewport.scrollTo(centerX - imageViewport.clientWidth / 2, centerY - imageViewport.clientHeight / 2);
+    zoomButtons[0].disabled = imageZoom === 4;
+    zoomButtons[1].disabled = imageZoom === 1;
+  }));
   let previewTrigger: HTMLImageElement | null = null;
   let previousOverflow = '';
   const openImage = (image: HTMLImageElement) => {
@@ -17,6 +47,7 @@ import { createVideoPlayback } from './videoPlayback';
     previewTrigger = image;
     dialogImage.src = image.dataset.imagePreview!;
     dialogImage.alt = image.alt;
+    fitPreview(image.naturalWidth, image.naturalHeight);
     previousOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
     imageDialog.showModal();
@@ -32,9 +63,9 @@ import { createVideoPlayback } from './videoPlayback';
       }
     });
   });
-  imageDialog.querySelector('button')!.addEventListener('click', () => imageDialog.close());
+  imageDialog.querySelector('.case-image-dialog__close')!.addEventListener('click', () => imageDialog.close());
   imageDialog.addEventListener('click', event => {
-    if (event.target === dialogImage) imageDialog.close();
+    if (event.target === dialogImage && !mobilePreview.matches) imageDialog.close();
     if (event.target === imageDialog) {
       const rect = imageDialog.getBoundingClientRect();
       if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) imageDialog.close();

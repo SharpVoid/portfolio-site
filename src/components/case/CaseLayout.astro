@@ -16,7 +16,13 @@ const { title, description, nextHref } = Astro.props;
   </main>
   <dialog class="case-image-dialog" aria-label="Просмотр изображения" data-scroll-native>
     <button class="case-image-dialog__close" type="button" aria-label="Закрыть изображение" autofocus>×</button>
-    <img class="case-image-dialog__image" alt="" />
+    <div class="case-image-dialog__zoom" role="group" aria-label="Масштаб изображения">
+      <button type="button" data-image-zoom="0.5" aria-label="Увеличить изображение">+</button>
+      <button type="button" data-image-zoom="-0.5" aria-label="Уменьшить изображение" disabled>−</button>
+    </div>
+    <div class="case-image-dialog__viewport" tabindex="0" role="region" aria-label="Изображение; после увеличения можно прокручивать">
+      <img class="case-image-dialog__image" alt="" />
+    </div>
   </dialog>
 </BaseLayout>
 <script>

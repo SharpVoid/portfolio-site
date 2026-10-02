@@ -17,9 +17,37 @@ html:has(.case-image-dialog[open]) { scrollbar-gutter: stable; }
   .case-image-dialog__close {
     position: absolute; top: 12px; right: 12px; width: 40px; height: 40px;
     display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
-    background: #ebf9ff; color: #004d6e; font: 28px/1 var(--font-sans); cursor: pointer;
+    background: #0075e2; color: white; font: 28px/1 var(--font-sans); cursor: pointer;
   }
   .case-image-dialog__close:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .case-image-dialog__close:active { background: #82bbfb; }
+  .case-image-dialog__zoom { display: none; }
+  .case-image-dialog__viewport:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  @media (max-width: 900px) {
+    html:has(.case-image-dialog[open]) { scrollbar-gutter: auto; }
+    .case-image-dialog { padding: 0; border: 0; border-radius: 20px; background: transparent; overflow: hidden; }
+    .case-image-dialog__viewport {
+      width: calc(var(--preview-width, calc(100vw - 32px)) * var(--preview-zoom, 1));
+      height: calc(var(--preview-height, calc(100dvh - 32px)) * var(--preview-zoom, 1));
+      max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px);
+      overflow: auto; overscroll-behavior: contain;
+    }
+    .case-image-dialog__image {
+      width: calc(var(--preview-width, 100%) * var(--preview-zoom, 1));
+      max-width: none; max-height: none; border-radius: 0; cursor: default;
+    }
+    .case-image-dialog__zoom { position: fixed; z-index: 1; top: 50dvh; right: 28px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; }
+    .case-image-dialog__close, .case-image-dialog__zoom button {
+      width: 44px; height: 44px; display: grid; place-items: center; padding: 0;
+      border: 1px solid #eaeff9; border-radius: 50%; background: #edf4fb; color: #0053b2;
+      box-shadow: 0 2px 8px rgb(24 94 185 / 18%); font: 28px/1 var(--font-sans); cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .case-image-dialog__close { z-index: 1; background: #0075e2; color: white; border-color: #0075e2; }
+    .case-image-dialog__zoom button:disabled { color: var(--color-text-muted); cursor: default; }
+    .case-image-dialog__zoom button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    .case-image-dialog__zoom button:active:not(:disabled) { background: #d0e6fa; }
+  }
   .case-page {
     --case-sticky-offset: 72px;
     --case-stage-spacing: 150px;
