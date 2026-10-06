@@ -6,10 +6,10 @@ import result from '../../assets/projects/arena-result.webp';
 
 export const designArena: CaseData = {
   seoTitle: 'Дизайн-арена — приложение для отслеживания калорий',
-  description: 'Конкурсный кейс по дизайну мобильного приложения для отслеживания калорий.',
+  description: 'Концепт мобильного приложения для отслеживания калорий, созданный за 24 часа в рамках дизайн-конкурса.',
   title: 'Дизайн-арена',
-  intro: 'Работа в рамках дизайн конкурса по созданию приложения для отслечивания калорий',
-  tags: ['Mobile App', 'Rapid Prototyping', 'HealthTech', 'Product Design', 'UI Design'],
+  intro: 'За 24 часа спроектировал приложение для отслеживания калорий: от заданных сценариев до интерфейса и прототипа в рамках дизайн-конкурса.',
+  tags: ['24 часа', 'Mobile App', 'Rapid Prototyping', 'HealthTech', 'Product Design', 'UI Design'],
   hero: { image: hero, alt: 'Экран приложения с круговой шкалой доступных калорий на фоне зелёного градиента' },
   stages: [
     {

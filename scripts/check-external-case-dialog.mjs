@@ -29,7 +29,7 @@ try {
     assert.equal(await dialog.evaluate(el => getComputedStyle(el).borderRadius), width === 390 ? '20px' : '30px');
     assert.equal(await dialog.evaluate(el => getComputedStyle(el, '::backdrop').backgroundColor), 'rgba(0, 0, 0, 0.5)');
     assert.equal(page.url(), home);
-    assert.equal(await dialog.locator('p').textContent(), 'Для просмотра кейса вы переходите на отдельный сайт');
+    assert.equal(await dialog.locator('p').textContent(), 'Вы переходите на публичный сайт ConsulAI');
     assert.equal(await dialog.locator('button').first().evaluate(el => el === document.activeElement), true);
     await page.keyboard.press('Tab');
     assert.equal(await dialog.locator('button').last().evaluate(el => el === document.activeElement), true);

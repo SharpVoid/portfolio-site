@@ -8,38 +8,39 @@ import focusRectangle from '../assets/projects/focusml-cover-wide-2026.png';
 import focusSquare from '../assets/projects/focusml-cover-narrow-2026.png';
 import bankMobile from '../assets/projects/bank-mobile.webp';
 import arenaDesktop from '../assets/projects/arena-desktop.webp';
-import atomDesktop from '../assets/projects/atom-desktop.webp';
+import atomCover from '../assets/projects/atom-mobile.webp';
 
 const projects = [
+  {
+    id: 'doverie', video: '/videos/doverie.mp4', title: projectTitles['/projects/doverie/'],
+    description: 'Мобильный банк с общим счётом и системой локальных переводов «Рядом»',
+    image: bankMobile, mobileImage: bankMobile,
+    alt: 'Главный экран банка «Доверие» на телефоне: баланс, карты и история операций',
+    href: '/projects/doverie/',
+    priority: true,
+  },
   {
     id: 'focusml', video: '/videos/focusml.mp4', title: projectTitles['/projects/focusml/'],
     description: 'Веб-инструмент разметки и обучения моделей машинного зрения',
     image: focusRectangle, mobileImage: focusSquare,
     alt: 'Интерфейс FocusML: разметка изображения арбузов с помощью текстового запроса',
     href: '/projects/focusml/',
-    priority: true,
     variants: [
       { image: focusSquare, media: '(min-width: 601px) and (max-width: 900px)' },
     ],
   },
   {
-    id: 'doverie', video: '/videos/doverie.mp4', title: projectTitles['/projects/doverie/'],
-    description: 'Мобильное банковское приложение с внедрением социальных функций',
-    image: bankMobile, mobileImage: bankMobile,
-    alt: 'Главный экран банка «Доверие» на телефоне: баланс, карты и история операций',
-    href: '/projects/doverie/',
-  },
-  {
     id: 'design-arena', video: '/videos/design-arena.mp4', title: projectTitles['/projects/design-arena/'],
-    description: 'Мобильное приложение для отслеживания калорий за день. Конкурсная работа внутри дизайн-сообщества',
+    description: 'Концепт приложения для отслеживания калорий, созданный за 24 часа в рамках дизайн-конкурса',
     image: arenaDesktop, mobileImage: arenaDesktop, secondary: true, href: '/projects/design-arena/',
-    mobileDescription: 'Мобильное приложение для отслеживания калорий за день',
+    mobileDescription: 'Концепт приложения для отслеживания калорий за 24 часа',
     alt: 'Экран приложения на телефоне с кольцом дневной нормы калорий и показателями питания',
   },
   {
     id: 'atomreport', video: '/videos/atomreport.mp4', title: projectTitles['https://www.consulai.ru/'],
-    description: 'Веб-сервис подготовки и согласования цифровой отчётности',
-    image: atomDesktop, mobileImage: atomDesktop, secondary: true, href: 'https://www.consulai.ru/',
+    description: 'Веб-сервис подготовки и согласования цифровой отчётности. Как продуктовый дизайнер и исследователь спроектировал AI-чат по документам и переработал систему тегов под требования клиентов.',
+    cta: 'Посмотреть продукт ↗',
+    image: atomCover, mobileImage: atomCover, secondary: true, href: 'https://www.consulai.ru/',
     confirmNavigation: true,
     alt: 'Светящиеся цифровые документы и курсор на обложке ConsulAI',
   },
@@ -54,7 +55,7 @@ const projects = [
     <Footer home />
   </main>
   <dialog id="external-case-dialog" class="external-case-dialog" aria-labelledby="external-case-message">
-    <p id="external-case-message">Для просмотра кейса вы переходите на отдельный сайт</p>
+    <p id="external-case-message">Вы переходите на публичный сайт ConsulAI</p>
     <form method="dialog" class="external-case-dialog__actions">
       <button class="external-case-dialog__confirm" value="confirm" autofocus>Окей</button>
       <button value="cancel">Отмена</button>

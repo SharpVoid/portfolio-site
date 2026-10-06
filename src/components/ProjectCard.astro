@@ -5,6 +5,7 @@ interface Props {
   id: string;
   title: string;
   description: string;
+  cta?: string;
   mobileDescription?: string;
   image: ImageMetadata;
   mobileImage: ImageMetadata;
@@ -17,7 +18,7 @@ interface Props {
   confirmNavigation?: boolean;
   variants?: { image: ImageMetadata; media: string }[];
 }
-const { id, title, description, mobileDescription, image, mobileImage, alt, href, video, webm, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
+const { id, title, description, cta, mobileDescription, image, mobileImage, alt, href, video, webm, priority = false, secondary = false, confirmNavigation = false, variants = [] } = Astro.props;
 const crops = [{ image: mobileImage, media: '(max-width: 600px)' }, ...variants, { image, media: undefined }];
 const sources = await Promise.all(crops.map(async (crop) => {
   // Keep enough source pixels for tall covers at 2x without shipping the 4K original.
@@ -51,6 +52,7 @@ const Card = href ? 'a' : 'div';
     <div class="project-card__content">
       <h2 id={`${id}-title`}>{title}</h2>
       {mobileDescription ? <><p class="project-card__description--desktop">{description}</p><p class="project-card__description--mobile">{mobileDescription}</p></> : <p>{description}</p>}
+      {cta && <p>{cta}</p>}
     </div>
   </Card>
   {video && <button class="project-card__playback" type="button" hidden aria-label={`Приостановить видео: ${title}`} data-title={title}>Ⅱ</button>}

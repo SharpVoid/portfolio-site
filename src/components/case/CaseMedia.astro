@@ -7,11 +7,14 @@ interface Props {
   loading?: 'eager' | 'lazy';
 }
 const { media, hero = false, loading = 'lazy' } = Astro.props;
+// Cover crops need pixels for the full image width, including the part outside the frame.
+const ratio = media.image ? media.image.width / media.image.height : 1;
+const heroSizes = `(max-width: 600px) max(calc(100vw - 62px), ${337 * ratio}px), (max-width: 1024px) max(calc(100vw - 62px), ${538 * ratio}px), (max-width: 1100px) max(calc(66.346vw + 282.62px), ${538 * ratio}px), (max-width: 1440px) max(calc(66.346vw + 282.62px), ${634 * ratio}px), (max-width: 1526px) max(calc(100vw - 202px), ${634 * ratio}px), ${Math.max(1324, 634 * ratio)}px`;
 ---
 {media.image ? (
   <Image src={media.image} alt={media.alt} quality={90} loading={hero ? 'eager' : loading}
-    widths={hero ? [640, 960, 1322, 2080] : undefined}
-    sizes={hero ? '(max-width: 1024px) calc(100vw - 60px), (max-width: 1440px) calc(100vw - 200px), 1326px' : undefined}
+    widths={hero ? [...new Set([640, 960, 1326, 2080, 2652, media.image.width].filter(width => width <= media.image.width))] : undefined}
+    sizes={hero ? heroSizes : undefined}
     fetchpriority={hero ? 'high' : undefined}
     style={hero && media.objectPosition ? `--case-hero-mobile-position: ${media.objectPosition}` : undefined}
     data-media-bordered={!hero || media.bordered || undefined}
