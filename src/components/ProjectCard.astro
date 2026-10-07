@@ -44,7 +44,7 @@ const Card = href ? 'a' : 'div';
       <img src={fallback.webp.src} width={fallback.webp.attributes.width} height={fallback.webp.attributes.height}
         alt={alt} loading={priority ? 'eager' : 'lazy'} fetchpriority={priority ? 'high' : 'auto'} decoding="async" />
     </picture>
-    {video && <video class="project-card__video" poster={fallback.webp.src} width={id === 'focusml' ? 1900 : id === 'atomreport' ? 1860 : 1920} height={id === 'focusml' ? 1100 : id === 'atomreport' ? 1112 : 1080} autoplay muted loop playsinline preload={priority ? 'metadata' : 'none'} aria-hidden="true" tabindex="-1">
+    {video && <video class="project-card__video" poster={fallback.webp.src} width={id === 'focusml' ? 2250 : id === 'atomreport' ? 1860 : 1920} height={id === 'focusml' ? 1308 : id === 'atomreport' ? 1112 : 1080} autoplay muted loop playsinline preload={priority ? 'metadata' : 'none'} aria-hidden="true" tabindex="-1">
       {webm && <source data-src={webm} type="video/webm" />}
       <source data-src={video} type="video/mp4" />
     </video>}
