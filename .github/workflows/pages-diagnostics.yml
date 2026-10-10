@@ -25,3 +25,12 @@ jobs:
               https_certificate,
               https_enforced
             }'
+      - name: Check authoritative DNS
+        run: |
+          for server in ns1.reg.ru ns2.reg.ru; do
+            echo "=== $server: CAA UDP ==="
+            dig @"$server" lisenkomisha.ru CAA +time=5 +tries=1 || true
+
+            echo "=== $server: CAA TCP ==="
+            dig @"$server" lisenkomisha.ru CAA +tcp +time=5 +tries=1 || true
+          done
