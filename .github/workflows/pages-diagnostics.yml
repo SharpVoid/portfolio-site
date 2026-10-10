@@ -1,0 +1,27 @@
+name: Diagnose Pages SSL
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check HTTPS certificate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/${{ github.repository }}/pages \
+            --jq '{
+              status,
+              cname,
+              protected_domain_state,
+              pending_domain_unverified_at,
+              https_certificate,
+              https_enforced
+            }'
