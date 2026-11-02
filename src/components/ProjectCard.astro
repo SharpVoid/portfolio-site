@@ -50,7 +50,7 @@ const Card = href ? 'a' : 'div';
     </video>}
     </div>
     <div class="project-card__content">
-      <h2 id={`${id}-title`}>{title}</h2>
+      <h2 id={`${id}-title`}>{title}<svg class="project-card__arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8" /></svg></h2>
       {mobileDescription ? <><p class="project-card__description--desktop">{description}</p><p class="project-card__description--mobile">{mobileDescription}</p></> : <p>{description}</p>}
       {cta && <p>{cta}</p>}
     </div>
@@ -79,7 +79,9 @@ const Card = href ? 'a' : 'div';
   @media (max-width: 600px) { #focusml .project-card__video { object-position: 42% center; } }
   .project-card__content { display: grid; gap: 6px; }
   h2, p { margin: 0; font-size: 16px; line-height: 20px; }
-  h2 { position: relative; justify-self: start; color: var(--color-accent); font-size: 20px; line-height: 26px; font-weight: 600; }
+  h2 { position: relative; display: inline-flex; align-items: center; gap: 6px; justify-self: start; color: var(--color-accent); font-size: 20px; line-height: 26px; font-weight: 600; }
+  .project-card__arrow { display: none; flex-shrink: 0; }
+  @media (max-width: 1024px) { .project-card__arrow { display: block; } }
   .project-card__description--mobile { display: none; }
   h2::after { content: ''; position: absolute; inset-inline: 0; bottom: -2px; height: 2px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 250ms ease; }
   .project-card:hover h2::after, .project-card__link:focus-visible h2::after { transform: scaleX(1); }

@@ -26,7 +26,8 @@ try {
         assert.equal(await page.locator('#doverie p').innerText(), 'Мобильный банк с общим счётом и системой локальных переводов «Рядом»');
         assert.match(await page.locator('#design-arena p:visible').innerText(), /24 часа/);
         assert.equal(await page.locator('#atomreport p').first().innerText(), 'Веб-сервис подготовки и согласования цифровой отчётности. Спроектировал AI-чат и переработал граф тегов');
-        assert.match(await page.locator('#atomreport .project-card__content').innerText(), /Посмотреть продукт ↗/);
+        assert.equal(await page.locator('#atomreport p').last().innerText(), 'Посмотреть продукт');
+        assert.equal(await page.locator('.project-card__arrow:visible').count(), width <= 1024 ? 4 : 0);
         assert.equal(await page.locator('#atomreport a').getAttribute('href'), 'https://www.consulai.ru/');
         assert.equal(await page.locator('#doverie img').getAttribute('fetchpriority'), 'high');
         for (const id of ['doverie', 'focusml', 'design-arena']) {
