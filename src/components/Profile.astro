@@ -12,7 +12,7 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
     <div class="profile__details">
       <div class="profile__about">
         <h1 id="page-title"><a href="/">Лисенко Михаил</a></h1>
-        <p>Product designer<span class="profile__extended-role">, UI/UX designer, AI-native</span><br />Проектирую сложные интерфейсы,<span class="profile__intro-break"><br /></span><span class="profile__intro-space"> </span>AI-продукты и B2B SaaS</p>
+        <p>Product designer, UI/UX designer, AI-native<br />Проектирую сложные интерфейсы,<span class="profile__intro-break"><br /></span><span class="profile__intro-space"> </span>AI-продукты и работаю с людьми для людей</p>
       </div>
       <div class="profile__achievements">
         <h2>Достижения</h2>
@@ -67,7 +67,7 @@ const { resumeHref = '/resume.pdf' } = Astro.props;
     .profile__intro-space { display: inline; }
     .profile__contact { padding-block: 12px; font-weight: 500; }
     .profile__contact.profile__resume { padding-block: 10px; }
-    .profile__extended-role, .profile__achievement-break { display: none; }
+    .profile__achievement-break { display: none; }
     .profile__achievement-space { display: inline; }
   }
   @media (max-width: 600px) {
